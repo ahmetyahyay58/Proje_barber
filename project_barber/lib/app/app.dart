@@ -15,8 +15,8 @@ class ProjectBarberApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF6366F1), // morumsu ana renk
-      brightness: Brightness.light,
+      seedColor: const Color(0xFFFFB300), // turuncu / sarı ana renk
+      brightness: Brightness.dark,
     );
 
     return MaterialApp(
@@ -25,7 +25,7 @@ class ProjectBarberApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: colorScheme,
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+        scaffoldBackgroundColor: const Color(0xFF020617), // çok koyu lacivert
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           foregroundColor: colorScheme.onSurface,

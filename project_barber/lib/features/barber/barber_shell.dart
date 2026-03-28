@@ -12,6 +12,7 @@ import '../../data/stores/working_days_store.dart';
 
 enum _BarberMenu {
   home('Ana Ekran', Icons.dashboard_outlined),
+  finance('Finans', Icons.bar_chart_outlined),
   appointments('Randevular', Icons.event_note_outlined),
   staff('Eleman Ekle/Çıkar', Icons.groups_outlined),
   prices('Fiyat Listesi', Icons.payments_outlined),
@@ -44,6 +45,7 @@ class _BarberShellState extends State<BarberShell> {
       _BarberMenu.home => _BarberHome(
           onAddBarber: () => _showAddBarberDialog(context),
         ),
+      _BarberMenu.finance => const _BarberFinancePage(),
       _BarberMenu.appointments => const _BarberAppointmentsPage(),
       _BarberMenu.staff => const _BarberStaffPage(),
       _BarberMenu.prices => const _BarberPriceListPage(),
@@ -530,6 +532,190 @@ class _StatCard extends StatelessWidget {
   }
 }
 
+class _BarberFinancePage extends StatelessWidget {
+  const _BarberFinancePage();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    final days = <_DailyRevenue>[
+      const _DailyRevenue(day: 1, amount: 120),
+      const _DailyRevenue(day: 3, amount: 250),
+      const _DailyRevenue(day: 5, amount: 180),
+      const _DailyRevenue(day: 7, amount: 320),
+      const _DailyRevenue(day: 8, amount: 280),
+      const _DailyRevenue(day: 10, amount: 150),
+      const _DailyRevenue(day: 12, amount: 310),
+      const _DailyRevenue(day: 14, amount: 200),
+      const _DailyRevenue(day: 15, amount: 220),
+      const _DailyRevenue(day: 16, amount: 190),
+      const _DailyRevenue(day: 18, amount: 280),
+      const _DailyRevenue(day: 20, amount: 240),
+      const _DailyRevenue(day: 21, amount: 290),
+      const _DailyRevenue(day: 22, amount: 210),
+      const _DailyRevenue(day: 24, amount: 350),
+      const _DailyRevenue(day: 25, amount: 260),
+    ];
+
+    final total = days.fold<int>(0, (sum, e) => sum + e.amount);
+    final maxAmount = days.fold<int>(0, (max, e) => e.amount > max ? e.amount : max);
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text(
+          'Finans Yönetimi',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+        const SizedBox(height: 12),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bu Aylık Hasılat',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Toplam',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      Text(
+                        '₺$total',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Günlük Gelir (Bu Ay)',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: scheme.surface,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 220,
+                        child: _RevenueChart(
+                          days: days,
+                          maxAmount: maxAmount,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Grafik demo amaçlıdır. Gerçek gelir hesaplamasını satış sistemine bağlayabilirsin.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.outline,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+      ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DailyRevenue {
+  const _DailyRevenue({required this.day, required this.amount});
+
+  final int day;
+  final int amount;
+}
+
+class _RevenueChart extends StatelessWidget {
+  const _RevenueChart({
+    required this.days,
+    required this.maxAmount,
+  });
+
+  final List<_DailyRevenue> days;
+  final int maxAmount;
+
+  @override
+  Widget build(BuildContext context) {
+    final barColor = const Color(0xFFFFB300);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxBarHeight = constraints.maxHeight - 40; // etiketler için boşluk
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (final d in days)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        '₺${d.amount}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 10,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        height: (d.amount / maxAmount) * maxBarHeight,
+                        decoration: BoxDecoration(
+                          color: barColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        d.day.toString(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontSize: 10,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _BarberAppointmentsPage extends StatelessWidget {
   const _BarberAppointmentsPage();
 
@@ -776,36 +962,329 @@ class _BarberDaysOffPageState extends State<_BarberDaysOffPage> {
   }
 }
 
-class _BarberSettingsPage extends StatelessWidget {
+class _BarberSettingsPage extends StatefulWidget {
   const _BarberSettingsPage();
 
   @override
+  State<_BarberSettingsPage> createState() => _BarberSettingsPageState();
+}
+
+class _BarberSettingsPageState extends State<_BarberSettingsPage> {
+  late TextEditingController _nameCtrl;
+  late TextEditingController _aboutCtrl;
+  Barber? _barber;
+
+  @override
+  void initState() {
+    super.initState();
+    final barbers = BarberStore.instance.barbers.value;
+    _barber = barbers.isNotEmpty ? barbers.first : null;
+    _nameCtrl = TextEditingController(text: _barber?.name ?? '');
+    _aboutCtrl = TextEditingController(text: _barber?.about ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _aboutCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    final barbers = BarberStore.instance.barbers.value;
+    if (barbers.isEmpty || _barber == null) return;
+    final current = _barber!;
+    final updated = Barber(
+      id: current.id,
+      name: _nameCtrl.text.trim().isEmpty ? current.name : _nameCtrl.text.trim(),
+      city: current.city,
+      district: current.district,
+      address: current.address,
+      rating: current.rating,
+      minPrice: current.minPrice,
+      maxPrice: current.maxPrice,
+      avatarPath: current.avatarPath,
+      galleryPaths: current.galleryPaths,
+      about: _aboutCtrl.text.trim().isEmpty ? null : _aboutCtrl.text.trim(),
+      masters: current.masters,
+    );
+    final list = List<Barber>.from(barbers);
+    list[0] = updated;
+    BarberStore.instance.barbers.value = list;
+    setState(() {
+      _barber = updated;
+    });
+    // ignore: use_build_context_synchronously
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Profil güncellendi.')),
+    );
+  }
+
+  Future<void> _pickAvatar() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+    );
+    if (result == null || result.files.single.path == null) return;
+    final path = result.files.single.path!;
+    final barbers = BarberStore.instance.barbers.value;
+    if (barbers.isEmpty || _barber == null) return;
+    final current = _barber!;
+    final updated = Barber(
+      id: current.id,
+      name: current.name,
+      city: current.city,
+      district: current.district,
+      address: current.address,
+      rating: current.rating,
+      minPrice: current.minPrice,
+      maxPrice: current.maxPrice,
+      avatarPath: path,
+      galleryPaths: current.galleryPaths,
+      about: current.about,
+      masters: current.masters,
+    );
+    final list = List<Barber>.from(barbers);
+    list[0] = updated;
+    BarberStore.instance.barbers.value = list;
+    setState(() {
+      _barber = updated;
+    });
+  }
+
+  Future<void> _pickGallery() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
+    if (result == null) return;
+    final newPaths = <String>[];
+    for (final f in result.files) {
+      if (f.path != null) newPaths.add(f.path!);
+    }
+    if (newPaths.isEmpty || _barber == null) return;
+    final barbers = BarberStore.instance.barbers.value;
+    if (barbers.isEmpty) return;
+    final current = _barber!;
+    final updated = Barber(
+      id: current.id,
+      name: current.name,
+      city: current.city,
+      district: current.district,
+      address: current.address,
+      rating: current.rating,
+      minPrice: current.minPrice,
+      maxPrice: current.maxPrice,
+      avatarPath: current.avatarPath,
+      galleryPaths: [...current.galleryPaths, ...newPaths],
+      about: current.about,
+      masters: current.masters,
+    );
+    final list = List<Barber>.from(barbers);
+    list[0] = updated;
+    BarberStore.instance.barbers.value = list;
+    setState(() {
+      _barber = updated;
+    });
+  }
+
+  void _removeGalleryItem(int index) {
+    if (_barber == null) return;
+    final barbers = BarberStore.instance.barbers.value;
+    if (barbers.isEmpty) return;
+    final current = _barber!;
+    if (index < 0 || index >= current.galleryPaths.length) return;
+    final newGallery = List<String>.from(current.galleryPaths)..removeAt(index);
+    final updated = Barber(
+      id: current.id,
+      name: current.name,
+      city: current.city,
+      district: current.district,
+      address: current.address,
+      rating: current.rating,
+      minPrice: current.minPrice,
+      maxPrice: current.maxPrice,
+      avatarPath: current.avatarPath,
+      galleryPaths: newGallery,
+      about: current.about,
+      masters: current.masters,
+    );
+    final list = List<Barber>.from(barbers);
+    list[0] = updated;
+    BarberStore.instance.barbers.value = list;
+    setState(() {
+      _barber = updated;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
+    if (_barber == null) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('Profil düzenlemek için en az bir berber oluşturmalısın.'),
+        ),
+      );
+    }
+
+    final barber = _barber!;
+
+    return Padding(
       padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'Genel Ayarlar',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
+      child: ListView(
+        children: [
+          Text(
+            'Genel Ayarlar',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Profil',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Dükkan Adı',
+                      prefixIcon: Icon(Icons.storefront_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _aboutCtrl,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: const InputDecoration(
+                      labelText: 'Hakkımda',
+                      alignLabelWithHint: true,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Medya',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: _pickAvatar,
+                        child: CircleAvatar(
+                          radius: 28,
+                          backgroundImage: barber.avatarPath != null &&
+                                  File(barber.avatarPath!).existsSync()
+                              ? FileImage(File(barber.avatarPath!))
+                              : null,
+                          child: barber.avatarPath == null ||
+                                  !(File(barber.avatarPath!).existsSync())
+                              ? const Icon(Icons.camera_alt_outlined)
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Profil fotoğrafına dokunarak cihazından görsel seçebilirsin.',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Galeri Fotoğrafları',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      TextButton.icon(
+                        onPressed: _pickGallery,
+                        icon: const Icon(Icons.add_photo_alternate_outlined),
+                        label: const Text('Ekle'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (barber.galleryPaths.isEmpty)
+                    Text(
+                      'Henüz galeri eklenmemiş.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    )
+                  else
+                    SizedBox(
+                      height: 90,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: barber.galleryPaths.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final path = barber.galleryPaths[index];
+                          final file = File(path);
+                          if (!file.existsSync()) {
+                            return const SizedBox.shrink();
+                          }
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  file,
+                                  width: 120,
+                                  height: 90,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: InkWell(
+                                  onTap: () => _removeGalleryItem(index),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _saveProfile,
+                    icon: const Icon(Icons.save_outlined),
+                    label: const Text('Kaydet'),
+                  ),
+                ],
               ),
-        ),
-        const SizedBox(height: 12),
-        const Card(
-          child: ListTile(
-            leading: Icon(Icons.info_outline),
-            title: Text('Profil / İletişim'),
-            subtitle: Text('Demo sayfa'),
+            ),
           ),
-        ),
-        const Card(
-          child: ListTile(
-            leading: Icon(Icons.notifications_outlined),
-            title: Text('Bildirim Ayarları'),
-            subtitle: Text('Demo sayfa'),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
