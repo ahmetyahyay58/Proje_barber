@@ -8,9 +8,11 @@ import '../../data/models/barber.dart';
 import '../../data/stores/appointment_store.dart';
 import '../../data/stores/barber_store.dart';
 import '../../data/stores/working_days_store.dart';
+import '../../widgets/berber_pro_logo.dart';
+import '../../widgets/hover_lift.dart';
 
 enum _CustomerMenu {
-  home('Berber Bul', Icons.search),
+  home('Berber Pro', Icons.search),
   appointments('Randevularım', Icons.event_available_outlined),
   reviews('Değerlendirmeler', Icons.rate_review_outlined),
   settings('Ayarlar', Icons.settings_outlined);
@@ -56,22 +58,26 @@ class _CustomerShellState extends State<CustomerShell> {
                   padding: EdgeInsets.zero,
                   children: [
                     for (final item in _CustomerMenu.values)
-                      ListTile(
-                        leading: Icon(item.icon),
-                        title: Text(item.label),
-                        selected: item == _selected,
-                        onTap: () => _select(item),
+                      HoverLift(
+                        child: ListTile(
+                          leading: Icon(item.icon),
+                          title: Text(item.label),
+                          selected: item == _selected,
+                          onTap: () => _select(item),
+                        ),
                       ),
                     const Divider(),
-                    ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: const Text('Çıkış Yap'),
-                      onTap: () {
-                        Navigator.of(context).pushNamedAndRemoveUntil(
-                          Routes.roleSelect,
-                          (_) => false,
-                        );
-                      },
+                    HoverLift(
+                      child: ListTile(
+                        leading: const Icon(Icons.logout),
+                        title: const Text('Çıkış Yap'),
+                        onTap: () {
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                            Routes.roleSelect,
+                            (_) => false,
+                          );
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -199,6 +205,10 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           children: [
+            const Center(
+              child: BerberProLogo(width: 110),
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 IconButton(
@@ -215,7 +225,7 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
                       ),
                 ),
                 Text(
-                  'BUL',
+                  'PRO',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: Colors.amber,
@@ -409,7 +419,8 @@ class _BarberCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
+    return HoverLift(
+      child: Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: InkWell(
@@ -560,6 +571,7 @@ class _BarberCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

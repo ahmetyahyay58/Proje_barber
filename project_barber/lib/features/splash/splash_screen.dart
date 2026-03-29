@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../app/routes.dart';
+import '../../widgets/berber_pro_logo.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -76,36 +77,10 @@ class _SplashScreenState extends State<SplashScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(40),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            scheme.primary,
-                            scheme.secondary,
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: scheme.primary.withValues(alpha: 0.25),
-                            blurRadius: 28,
-                            offset: const Offset(0, 18),
-                          ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.content_cut,
-                        size: 62,
-                        color: scheme.onPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    const BerberProLogo(width: 168),
+                    const SizedBox(height: 20),
                     Text(
-                      'Project Barber',
+                      'Berber Pro',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),

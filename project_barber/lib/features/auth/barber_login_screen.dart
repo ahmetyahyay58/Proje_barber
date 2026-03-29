@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/routes.dart';
+import '../../widgets/hover_lift.dart';
 
 class BarberLoginScreen extends StatefulWidget {
   const BarberLoginScreen({super.key});
@@ -104,16 +105,20 @@ class _BarberLoginScreenState extends State<BarberLoginScreen> {
                   onFieldSubmitted: (_) => _submit(),
                 ),
                 const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _submit,
-                  child: const Text('Panele Gir'),
+                HoverLift(
+                  child: FilledButton(
+                    onPressed: _submit,
+                    child: const Text('Giriş yap'),
+                  ),
                 ),
                 const SizedBox(height: 10),
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).pushReplacementNamed(
-                    Routes.roleSelect,
+                HoverLift(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pushReplacementNamed(
+                      Routes.roleSelect,
+                    ),
+                    child: const Text('Geri Dön (Rol Seçimi)'),
                   ),
-                  child: const Text('Geri Dön (Rol Seçimi)'),
                 ),
               ],
             ),

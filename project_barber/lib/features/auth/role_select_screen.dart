@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/routes.dart';
+import '../../widgets/berber_pro_logo.dart';
 
 class RoleSelectScreen extends StatelessWidget {
   const RoleSelectScreen({super.key});
@@ -8,18 +9,19 @@ class RoleSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final scaffoldBg = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
       body: SafeArea(
         child: Container(
           width: double.infinity,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF020617),
-                Color(0xFF020617),
-                Color(0xFF020617),
+                Color.lerp(scaffoldBg, scheme.secondary, 0.14)!,
+                scaffoldBg,
+                Color.lerp(scaffoldBg, scheme.secondary, 0.08)!,
               ],
             ),
           ),
@@ -28,9 +30,11 @@ class RoleSelectScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 12),
-                _LogoHeader(colorScheme: scheme),
-                const SizedBox(height: 32),
+                const SizedBox(height: 8),
+                const Center(
+                  child: BerberProLogo(width: 220),
+                ),
+                const SizedBox(height: 28),
                 Text(
                   'RANDEVU SİSTEMİNİ\nSANAL DÜNYAYA TAŞIYORUZ',
                   textAlign: TextAlign.center,
@@ -45,7 +49,19 @@ class RoleSelectScreen extends StatelessWidget {
                   title: 'Müşteriyim',
                   subtitle:
                       'Şehir / ilçe filtrele, berberleri sırala, hemen randevu al.',
-                  icon: Icons.person_outline,
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: ColoredBox(
+                      color: scheme.secondary.withValues(alpha: 0.14),
+                      child: Image.asset(
+                        'assets/images/role_customer_logo.png',
+                        width: 52,
+                        height: 52,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                  ),
                   isPrimary: true,
                   onTap: () => Navigator.of(context).pushNamed(
                     Routes.customerLogin,
@@ -56,7 +72,19 @@ class RoleSelectScreen extends StatelessWidget {
                   title: 'Berberim',
                   subtitle:
                       'Randevularını yönet, fiyat listesini düzenle, izin günlerini ayarla.',
-                  icon: Icons.storefront_outlined,
+                  leading: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: ColoredBox(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      child: Image.asset(
+                        'assets/images/role_barber_logo.png',
+                        width: 52,
+                        height: 52,
+                        fit: BoxFit.cover,
+                        filterQuality: FilterQuality.high,
+                      ),
+                    ),
+                  ),
                   isPrimary: false,
                   onTap: () => Navigator.of(context).pushNamed(
                     Routes.barberLogin,
@@ -80,171 +108,179 @@ class RoleSelectScreen extends StatelessWidget {
   }
 }
 
-class _LogoHeader extends StatelessWidget {
-  const _LogoHeader({required this.colorScheme});
-
-  final ColorScheme colorScheme;
-
-  @override
-  Widget build(BuildContext context) {
-    final accent = const Color(0xFFFFB300);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: accent,
-                borderRadius: BorderRadius.circular(32),
-                boxShadow: [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.45),
-                    blurRadius: 32,
-                    offset: const Offset(0, 18),
-                  ),
-                ],
-              ),
-              child: const Icon(
-                Icons.content_cut,
-                size: 56,
-                color: Colors.black,
-              ),
-            ),
-            Positioned(
-              bottom: -10,
-              right: -10,
-              child: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      blurRadius: 18,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.language,
-                  size: 22,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.2,
-                ),
-            children: const [
-              TextSpan(text: 'BERBER'),
-              TextSpan(
-                text: 'PRO',
-                style: TextStyle(
-                  color: Color(0xFFFFB300),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RoleCard extends StatelessWidget {
+class _RoleCard extends StatefulWidget {
   const _RoleCard({
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.leading,
     required this.isPrimary,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
-  final IconData icon;
+  final Widget leading;
   final bool isPrimary;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    final bgColor = isPrimary ? Colors.white : const Color(0xFF020617);
-    final titleColor = isPrimary ? const Color(0xFF020617) : Colors.white;
-    final subtitleColor =
-        isPrimary ? const Color(0xFF4B5563) : Colors.white.withValues(alpha: 0.78);
+  State<_RoleCard> createState() => _RoleCardState();
+}
 
-    return Material(
-      color: bgColor,
-      borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: isPrimary
-                      ? const Color(0xFFF3F4FF)
-                      : Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  icon,
-                  color: isPrimary
-                      ? const Color(0xFF020617)
-                      : Colors.white.withValues(alpha: 0.94),
-                ),
+class _RoleCardState extends State<_RoleCard> {
+  static const _anim = Duration(milliseconds: 240);
+  static const Curve _curve = Curves.easeOutCubic;
+
+  bool _hover = false;
+
+  static const Color _accent = Color(0xFFFFB300);
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final bgColor = widget.isPrimary ? Colors.white : Colors.black;
+    final titleColor =
+        widget.isPrimary ? scheme.onInverseSurface : Colors.white;
+    final subtitleColor = widget.isPrimary
+        ? scheme.onInverseSurface.withValues(alpha: 0.62)
+        : Colors.white.withValues(alpha: 0.78);
+
+    final hoverGlow = widget.isPrimary
+        ? scheme.secondary.withValues(alpha: 0.42)
+        : _accent.withValues(alpha: 0.5);
+    final borderGlow = widget.isPrimary
+        ? scheme.secondary.withValues(alpha: 0.55)
+        : _accent.withValues(alpha: 0.65);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedSlide(
+        duration: _anim,
+        curve: _curve,
+        offset: _hover ? const Offset(0, -0.04) : Offset.zero,
+        child: AnimatedContainer(
+          duration: _anim,
+          curve: _curve,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: _hover ? borderGlow : Colors.transparent,
+              width: _hover ? 1.5 : 0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: _hover
+                    ? hoverGlow
+                    : Colors.black.withValues(alpha: widget.isPrimary ? 0.07 : 0.35),
+                blurRadius: _hover ? 32 : 14,
+                spreadRadius: _hover ? 0 : 0,
+                offset: Offset(0, _hover ? 14 : 6),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+              if (_hover)
+                BoxShadow(
+                  color: (widget.isPrimary ? scheme.secondary : _accent)
+                      .withValues(alpha: 0.15),
+                  blurRadius: 48,
+                  offset: const Offset(0, 20),
+                ),
+            ],
+          ),
+          child: Material(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(24),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(24),
+              splashColor: widget.isPrimary
+                  ? scheme.secondary.withValues(alpha: 0.22)
+                  : _accent.withValues(alpha: 0.28),
+              highlightColor: widget.isPrimary
+                  ? scheme.secondary.withValues(alpha: 0.1)
+                  : Colors.white.withValues(alpha: 0.1),
+              hoverColor: widget.isPrimary
+                  ? scheme.secondary.withValues(alpha: 0.07)
+                  : Colors.white.withValues(alpha: 0.07),
+              onTap: () {
+                Feedback.forTap(context);
+                widget.onTap();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                child: Row(
                   children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: titleColor,
-                          ),
+                    _HoverScale(
+                      hovered: _hover,
+                      child: widget.leading,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: subtitleColor,
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          AnimatedDefaultTextStyle(
+                            duration: _anim,
+                            curve: _curve,
+                            style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: titleColor,
+                                  letterSpacing: _hover ? 0.15 : 0,
+                                ),
+                            child: Text(widget.title),
                           ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.subtitle,
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: subtitleColor,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    AnimatedSlide(
+                      duration: _anim,
+                      curve: _curve,
+                      offset: _hover ? const Offset(0.12, 0) : Offset.zero,
+                      child: Icon(
+                        Icons.chevron_right_rounded,
+                        size: 26,
+                        color: widget.isPrimary
+                            ? scheme.onInverseSurface
+                            : Colors.white.withValues(alpha: 0.9),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right,
-                color: isPrimary
-                    ? const Color(0xFF020617)
-                    : Colors.white.withValues(alpha: 0.8),
-              ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Hover’da logoyu hafifçe büyütür (web / masaüstü).
+class _HoverScale extends StatelessWidget {
+  const _HoverScale({
+    required this.hovered,
+    required this.child,
+  });
+
+  final bool hovered;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedScale(
+      scale: hovered ? 1.07 : 1.0,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+      child: child,
     );
   }
 }
