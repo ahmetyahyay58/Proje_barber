@@ -1,12 +1,18 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../app/routes.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/barber.dart';
+import '../../data/storage/media_storage.dart';
 import '../../data/stores/appointment_store.dart';
 import '../../data/stores/barber_store.dart';
+import '../../data/stores/customer_profile_store.dart';
 import '../../data/stores/working_days_store.dart';
 import '../../widgets/berber_pro_logo.dart';
 import '../../widgets/hover_lift.dart';
@@ -22,6 +28,22 @@ enum _CustomerMenu {
   final IconData icon;
 }
 
+ImageProvider? _imageProviderFromSource(String? source) {
+  if (source == null || source.isEmpty) return null;
+  if (source.startsWith('http://') || source.startsWith('https://')) {
+    return NetworkImage(source);
+  }
+  if (source.startsWith('data:image')) {
+    final comma = source.indexOf(',');
+    if (comma < 0) return null;
+    return MemoryImage(base64Decode(source.substring(comma + 1)));
+  }
+  if (kIsWeb) return null;
+  final file = File(source);
+  if (!file.existsSync()) return null;
+  return FileImage(file);
+}
+
 class CustomerShell extends StatefulWidget {
   const CustomerShell({super.key});
 
@@ -32,8 +54,18 @@ class CustomerShell extends StatefulWidget {
 class _CustomerShellState extends State<CustomerShell> {
   _CustomerMenu _selected = _CustomerMenu.home;
 
+  @override
+  void initState() {
+    super.initState();
+    CustomerProfileStore.instance.refreshProfile();
+    BarberStore.instance.refreshBarbers();
+  }
+
   void _select(_CustomerMenu menu) {
     setState(() => _selected = menu);
+    if (menu == _CustomerMenu.home) {
+      BarberStore.instance.refreshBarbers();
+    }
     Navigator.of(context).maybePop();
   }
 
@@ -98,29 +130,38 @@ class _DrawerHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      color: scheme.secondaryContainer,
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: scheme.secondary,
-            foregroundColor: scheme.onSecondary,
-            child: const Icon(Icons.person),
+    return ValueListenableBuilder<CustomerProfileData?>(
+      valueListenable: CustomerProfileStore.instance.profile,
+      builder: (context, profile, _) {
+        final image = _imageProviderFromSource(profile?.avatarUrl);
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          color: scheme.secondaryContainer,
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: scheme.secondary,
+                foregroundColor: scheme.onSecondary,
+                backgroundImage: image,
+                child: image == null ? const Icon(Icons.person) : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  (profile?.fullName ?? '').trim().isEmpty
+                      ? title
+                      : profile!.fullName!,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: scheme.onSecondaryContainer,
+                      ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: scheme.onSecondaryContainer,
-                  ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -139,6 +180,12 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
   String _query = '';
 
   _ServiceFilter _serviceFilter = _ServiceFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    BarberStore.instance.refreshBarbers();
+  }
 
   bool _matchesService(Barber b) {
     if (_serviceFilter == _ServiceFilter.all) return true;
@@ -163,6 +210,23 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
     return ValueListenableBuilder<List<Barber>>(
       valueListenable: BarberStore.instance.barbers,
       builder: (context, barbers, _) {
+        return ValueListenableBuilder<List<Appointment>>(
+          valueListenable: AppointmentStore.instance.appointments,
+          builder: (context, appointments, __) {
+        final ratingByBarberId = <String, double>{};
+        for (final barber in barbers) {
+          final rated = appointments
+              .where((a) => a.barberId == barber.id && a.rating != null)
+              .toList();
+          if (rated.isEmpty) {
+            ratingByBarberId[barber.id] = barber.rating;
+            continue;
+          }
+          final average =
+              rated.fold<double>(0, (sum, a) => sum + a.rating!) / rated.length;
+          ratingByBarberId[barber.id] = average;
+        }
+
         final cities = barbers.map((b) => b.city).toSet().toList()..sort();
         final effectiveCity = _city != null && cities.contains(_city) ? _city : null;
         final districtCandidates = barbers
@@ -195,7 +259,10 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
         }).toList();
 
         if (_sortByRating) {
-          filtered.sort((a, b) => b.rating.compareTo(a.rating));
+          filtered.sort(
+            (a, b) => (ratingByBarberId[b.id] ?? b.rating)
+                .compareTo(ratingByBarberId[a.id] ?? a.rating),
+          );
         } else {
           filtered.sort((a, b) => a.minPrice.compareTo(b.minPrice));
         }
@@ -232,6 +299,21 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
                       ),
                 ),
                 const Spacer(),
+                ValueListenableBuilder<CustomerProfileData?>(
+                  valueListenable: CustomerProfileStore.instance.profile,
+                  builder: (context, profile, _) {
+                    final image = _imageProviderFromSource(profile?.avatarUrl);
+                    return CircleAvatar(
+                      radius: 17,
+                      backgroundColor: scheme.surfaceContainerHighest,
+                      backgroundImage: image,
+                      child: image == null
+                          ? const Icon(Icons.person_outline, size: 18)
+                          : null,
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -359,13 +441,20 @@ class _CustomerFindBarberPageState extends State<_CustomerFindBarberPage> {
               ],
             ),
             const SizedBox(height: 12),
-            ...filtered.map((b) => _BarberCard(barber: b)),
+            ...filtered.map(
+              (b) => _BarberCard(
+                barber: b,
+                effectiveRating: ratingByBarberId[b.id] ?? b.rating,
+              ),
+            ),
             if (filtered.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 24),
                 child: Center(child: Text('Seçime uygun berber bulunamadı.')),
               ),
           ],
+        );
+          },
         );
       },
     );
@@ -412,9 +501,13 @@ class _FilterChipPill extends StatelessWidget {
 }
 
 class _BarberCard extends StatelessWidget {
-  const _BarberCard({required this.barber});
+  const _BarberCard({
+    required this.barber,
+    required this.effectiveRating,
+  });
 
   final Barber barber;
+  final double effectiveRating;
 
   @override
   Widget build(BuildContext context) {
@@ -439,7 +532,10 @@ class _BarberCard extends StatelessWidget {
               builder: (_, controller) => SingleChildScrollView(
                 controller: controller,
                 padding: const EdgeInsets.all(16),
-                child: _BookAppointmentSheet(barber: barber),
+                child: _BookAppointmentSheet(
+                  barber: barber,
+                  effectiveRating: effectiveRating,
+                ),
               ),
             ),
           );
@@ -513,7 +609,7 @@ class _BarberCard extends StatelessWidget {
                         const Icon(Icons.star, size: 14, color: Colors.amber),
                         const SizedBox(width: 3),
                         Text(
-                          barber.rating.toStringAsFixed(1),
+                          effectiveRating.toStringAsFixed(1),
                           style: const TextStyle(
                             fontWeight: FontWeight.w700,
                             color: Colors.amber,
@@ -580,7 +676,35 @@ class _BarberCard extends StatelessWidget {
     if (barber.avatarPath == null) {
       return const Icon(Icons.storefront);
     }
-    final file = File(barber.avatarPath!);
+    final source = barber.avatarPath!;
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+      return ClipOval(
+        child: Image.network(
+          source,
+          fit: BoxFit.cover,
+          width: 40,
+          height: 40,
+          errorBuilder: (_, __, ___) => const Icon(Icons.storefront),
+        ),
+      );
+    }
+    if (source.startsWith('data:image')) {
+      final comma = source.indexOf(',');
+      if (comma < 0) return const Icon(Icons.storefront);
+      final bytes = base64Decode(source.substring(comma + 1));
+      return ClipOval(
+        child: Image.memory(
+          bytes,
+          fit: BoxFit.cover,
+          width: 40,
+          height: 40,
+        ),
+      );
+    }
+    if (kIsWeb) {
+      return const Icon(Icons.storefront);
+    }
+    final file = File(source);
     if (!file.existsSync()) {
       return const Icon(Icons.storefront);
     }
@@ -596,9 +720,13 @@ class _BarberCard extends StatelessWidget {
 }
 
 class _BookAppointmentSheet extends StatefulWidget {
-  const _BookAppointmentSheet({required this.barber});
+  const _BookAppointmentSheet({
+    required this.barber,
+    required this.effectiveRating,
+  });
 
   final Barber barber;
+  final double effectiveRating;
 
   @override
   State<_BookAppointmentSheet> createState() => _BookAppointmentSheetState();
@@ -608,15 +736,21 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
   DateTime? _selectedDate;
   TimeOfDay? _selectedSlot;
   String? _selectedMaster;
+  bool _isSubmitting = false;
 
   final Set<String> _selectedServiceIds = <String>{};
 
-  int get _totalDurationMinutes {
-    if (widget.barber.services.isEmpty) {
-      return 30;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.barber.masters.isNotEmpty) {
+      _selectedMaster = widget.barber.masters.first;
     }
-    if (_selectedServiceIds.isEmpty) {
-      return widget.barber.services.first.durationMinutes;
+  }
+
+  int get _totalDurationMinutes {
+    if (widget.barber.services.isEmpty || _selectedServiceIds.isEmpty) {
+      return 0;
     }
     return widget.barber.services
         .where((s) => _selectedServiceIds.contains(s.id))
@@ -624,22 +758,20 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
   }
 
   int get _totalPrice {
-    if (widget.barber.services.isEmpty) return 0;
-    final services = _selectedServiceIds.isEmpty
-        ? <BarberService>[widget.barber.services.first]
-        : widget.barber.services
-            .where((s) => _selectedServiceIds.contains(s.id))
-            .toList();
+    if (widget.barber.services.isEmpty || _selectedServiceIds.isEmpty) return 0;
+    final services = widget.barber.services
+        .where((s) => _selectedServiceIds.contains(s.id))
+        .toList();
     return services.fold<int>(0, (sum, s) => sum + s.price);
   }
 
   List<String> get _selectedServiceNames {
-    if (widget.barber.services.isEmpty) return const <String>[];
-    final services = _selectedServiceIds.isEmpty
-        ? <BarberService>[widget.barber.services.first]
-        : widget.barber.services
-            .where((s) => _selectedServiceIds.contains(s.id))
-            .toList();
+    if (widget.barber.services.isEmpty || _selectedServiceIds.isEmpty) {
+      return const <String>[];
+    }
+    final services = widget.barber.services
+        .where((s) => _selectedServiceIds.contains(s.id))
+        .toList();
     return services.map((s) => s.name).toList();
   }
 
@@ -656,6 +788,39 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
     return '$hour:$minute';
   }
 
+  String _maskName(String? name) {
+    final value = (name ?? '').trim();
+    if (value.isEmpty) return 'mi*** mü***';
+    final parts = value.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    final masked = parts.map((part) {
+      final lower = part.toLowerCase();
+      final visible = lower.length >= 2 ? lower.substring(0, 2) : lower;
+      return '$visible***';
+    }).toList();
+    return masked.join(' ');
+  }
+
+  Color _ratingColor(double rating) {
+    if (rating >= 4) return Colors.green;
+    if (rating >= 3) return Colors.amber;
+    return Colors.redAccent;
+  }
+
+  ImageProvider? _imageProviderFromSource(String source) {
+    if (source.startsWith('http://') || source.startsWith('https://')) {
+      return NetworkImage(source);
+    }
+    if (source.startsWith('data:image')) {
+      final comma = source.indexOf(',');
+      if (comma < 0) return null;
+      return MemoryImage(base64Decode(source.substring(comma + 1)));
+    }
+    if (kIsWeb) return null;
+    final file = File(source);
+    if (!file.existsSync()) return null;
+    return FileImage(file);
+  }
+
   List<TimeOfDay> _generateSlots(DateTime date) {
     final now = DateTime.now();
     final durationMinutes = _totalDurationMinutes;
@@ -666,6 +831,17 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
           a.dateTime.month == date.month &&
           a.dateTime.day == date.day,
     );
+
+    bool isSameMaster(Appointment a) {
+      // Elemanli berberlerde cakisma kontrolu eleman bazinda calisir.
+      if (widget.barber.masters.isNotEmpty) {
+        final selected = (_selectedMaster ?? '').trim();
+        final booked = (a.masterName ?? '').trim();
+        return selected.isNotEmpty && booked.isNotEmpty && selected == booked;
+      }
+      // Eleman tanimsiz berberlerde tek koltuk varsayimiyla global cakisma.
+      return true;
+    }
 
     bool overlaps(DateTime start, DateTime end, Appointment a) {
       final aDuration = a.durationMinutes <= 0 ? 30 : a.durationMinutes;
@@ -695,6 +871,7 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
 
         var isFree = true;
         for (final a in existing) {
+          if (!isSameMaster(a)) continue;
           if (overlaps(start, end, a)) {
             isFree = false;
             break;
@@ -792,91 +969,154 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
     );
   }
 
-  void _submit() {
-    if (_selectedDate == null || _selectedSlot == null) return;
-    final date = _selectedDate!;
-    final time = _selectedSlot!;
-    final dateTime = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-    final id = DateTime.now().millisecondsSinceEpoch.toString();
-    final duration = _totalDurationMinutes;
-    final services = _selectedServiceNames;
-    AppointmentStore.instance.addAppointment(
-      Appointment(
-        id: id,
-        barberId: widget.barber.id,
-        barberName: widget.barber.name,
-        durationMinutes: duration,
-        serviceNames: services,
-        masterName: _selectedMaster,
-        dateTime: dateTime,
-      ),
-    );
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        final scheme = Theme.of(ctx).colorScheme;
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade500,
-                    size: 48,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Tebrikler!',
-                  style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Randevunuz başarıyla oluşturuldu.\nRandevu saatinizden önce sizi bilgilendireceğiz.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                        color: scheme.outline,
-                      ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      Navigator.of(ctx).pop(); // dialog
-                      Navigator.of(context).pop(); // bottom sheet
-                    },
-                    child: const Text('Tamam'),
-                  ),
-                ),
-              ],
+  Future<Map<String, String?>> _loadCustomerInfo() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      return const {'name': null, 'phone': null};
+    }
+    final profile = await Supabase.instance.client
+        .from('profiles')
+        .select('full_name,phone')
+        .eq('id', user.id)
+        .maybeSingle();
+    final name = profile?['full_name']?.toString();
+    final phone = profile?['phone']?.toString();
+    return <String, String?>{
+      'name': (name != null && name.trim().isNotEmpty)
+          ? name.trim()
+          : (user.email ?? 'Müşteri'),
+      'phone': phone,
+    };
+  }
+
+  Future<void> _submit() async {
+    if (_selectedDate == null || _selectedSlot == null || _isSubmitting) return;
+    if (widget.barber.services.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Bu berber icin hizmet tanimli degil.'),
+        ),
+      );
+      return;
+    }
+    if (_selectedServiceIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lutfen en az bir hizmet sec.'),
+        ),
+      );
+      return;
+    }
+    if (widget.barber.masters.isNotEmpty &&
+        (_selectedMaster == null || _selectedMaster!.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lutfen bir eleman sec.'),
+        ),
+      );
+      return;
+    }
+    setState(() => _isSubmitting = true);
+    try {
+      final date = _selectedDate!;
+      final time = _selectedSlot!;
+      final dateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final duration = _totalDurationMinutes;
+      final services = _selectedServiceNames;
+      final customerInfo = await _loadCustomerInfo();
+      await AppointmentStore.instance.addAppointment(
+        Appointment(
+          id: id,
+          barberId: widget.barber.id,
+          barberName: widget.barber.name,
+          durationMinutes: duration,
+          totalAmount: _totalPrice,
+          customerId: Supabase.instance.client.auth.currentUser?.id,
+          customerName: customerInfo['name'],
+          customerPhone: customerInfo['phone'],
+          serviceNames: services,
+          masterName: _selectedMaster,
+          dateTime: dateTime,
+        ),
+      );
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          final scheme = Theme.of(ctx).colorScheme;
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
             ),
-          ),
-        );
-      },
-    );
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.green.shade500,
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Tebrikler!',
+                    style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Randevunuz başarıyla oluşturuldu.\nRandevu saatinizden önce sizi bilgilendireceğiz.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                          color: scheme.outline,
+                        ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('Tamam'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Randevu olusturulamadi: $e')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -903,7 +1143,7 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
               children: [
                 const Icon(Icons.star, size: 18),
                 const SizedBox(width: 4),
-                Text(widget.barber.rating.toStringAsFixed(1)),
+                Text(widget.effectiveRating.toStringAsFixed(1)),
               ],
             ),
             const SizedBox(width: 12),
@@ -920,14 +1160,14 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
                 final path = widget.barber.galleryPaths[index];
-                final file = File(path);
-                if (!file.existsSync()) {
+                final provider = _imageProviderFromSource(path);
+                if (provider == null) {
                   return const SizedBox.shrink();
                 }
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    file,
+                  child: Image(
+                    image: provider,
                     width: 120,
                     height: 90,
                     fit: BoxFit.cover,
@@ -991,17 +1231,27 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Toplam süre: $_totalDurationMinutes dk',
+                        'Toplam sure: $_totalDurationMinutes dk',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       if (_totalPrice > 0)
                         Text(
-                          'Tahmini ücret: $_totalPrice ₺',
+                          'Toplam ucret: $_totalPrice ₺',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                     ],
                   ),
                 ],
+              ),
+            ),
+          )
+        else
+          Card(
+            color: scheme.surface.withValues(alpha: 0.9),
+            child: const Padding(
+              padding: EdgeInsets.all(12),
+              child: Text(
+                'Bu berberin fiyat listesinde henuz hizmet yok. Randevu olusturulamaz.',
               ),
             ),
           ),
@@ -1054,10 +1304,18 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
                               child: Text(m),
                             ),
                         ],
-                        onChanged: (v) => setState(() => _selectedMaster = v),
+                        onChanged: (v) => setState(() {
+                          _selectedMaster = v;
+                          _selectedSlot = null;
+                        }),
                       ),
                       const SizedBox(height: 12),
                     ],
+                  )
+                else
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text('Bu berber icin eleman tanimi yok.'),
                   ),
                 if (_selectedDate != null)
                   Wrap(
@@ -1095,9 +1353,97 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
         const SizedBox(height: 16),
         FilledButton.icon(
           onPressed:
-              _selectedDate != null && _selectedSlot != null ? _submit : null,
+              _selectedDate != null &&
+                      _selectedSlot != null &&
+                      !_isSubmitting &&
+                      widget.barber.services.isNotEmpty &&
+                      _selectedServiceIds.isNotEmpty
+                  ? _submit
+                  : null,
           icon: const Icon(Icons.event_available_outlined),
-          label: const Text('Randevuyu Onayla'),
+          label: Text(_isSubmitting ? 'Olusturuluyor...' : 'Randevuyu Onayla'),
+        ),
+        const SizedBox(height: 16),
+        ValueListenableBuilder<List<Appointment>>(
+          valueListenable: AppointmentStore.instance.appointments,
+          builder: (context, appointments, _) {
+            final reviews = appointments
+                .where((a) => a.barberId == widget.barber.id && a.rating != null)
+                .toList()
+              ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+
+            return Card(
+              color: scheme.surface.withValues(alpha: 0.9),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Musteri Yorumlari',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (reviews.isEmpty)
+                      Text(
+                        'Henuz yorum bulunmuyor.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: scheme.outline,
+                            ),
+                      )
+                    else
+                      ...reviews.take(20).map((r) {
+                        final starColor = _ratingColor(r.rating!);
+                        final comment = (r.note ?? '').trim();
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: scheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _maskName(r.customerName),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(fontWeight: FontWeight.w600),
+                                      ),
+                                    ),
+                                    Icon(Icons.star, size: 16, color: starColor),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      r.rating!.toStringAsFixed(1),
+                                      style: TextStyle(
+                                        color: starColor,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (comment.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(comment),
+                                ],
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
@@ -1142,7 +1488,11 @@ class _CustomerAppointmentsPage extends StatelessWidget {
                     .toList()
                   ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
 
-                Widget buildList(List<Appointment> items, String emptyText) {
+                Widget buildList(
+                  List<Appointment> items,
+                  String emptyText, {
+                  required bool isUpcoming,
+                }) {
                   if (items.isEmpty) {
                     return Center(
                       child: Padding(
@@ -1188,16 +1538,46 @@ class _CustomerAppointmentsPage extends StatelessWidget {
                                 ),
                             ],
                           ),
-                          trailing: a.rating != null
-                              ? Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.star, size: 16),
-                                    const SizedBox(width: 2),
-                                    Text(a.rating!.toStringAsFixed(1)),
-                                  ],
+                          trailing: isUpcoming
+                              ? Builder(
+                                  builder: (context) {
+                                    final canCancel =
+                                        a.dateTime.difference(now) >=
+                                            const Duration(hours: 4);
+                                    return TextButton(
+                                      onPressed: canCancel
+                                          ? () async {
+                                              await AppointmentStore.instance
+                                                  .cancelAppointment(a.id);
+                                              if (!context.mounted) return;
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Randevu iptal edildi.',
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                          : null,
+                                      child: Text(
+                                        canCancel
+                                            ? 'Iptal Et'
+                                            : '<4 saat kala iptal yok',
+                                      ),
+                                    );
+                                  },
                                 )
-                              : const SizedBox.shrink(),
+                              : (a.rating != null
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.star, size: 16),
+                                        const SizedBox(width: 2),
+                                        Text(a.rating!.toStringAsFixed(1)),
+                                      ],
+                                    )
+                                  : const SizedBox.shrink()),
                         ),
                       );
                     },
@@ -1206,8 +1586,16 @@ class _CustomerAppointmentsPage extends StatelessWidget {
 
                 return TabBarView(
                   children: [
-                    buildList(upcoming, 'Yaklaşan randevun yok.'),
-                    buildList(past, 'Geçmiş randevun yok.'),
+                    buildList(
+                      upcoming,
+                      'Yaklaşan randevun yok.',
+                      isUpcoming: true,
+                    ),
+                    buildList(
+                      past,
+                      'Geçmiş randevun yok.',
+                      isUpcoming: false,
+                    ),
                   ],
                 );
               },
@@ -1222,21 +1610,47 @@ class _CustomerAppointmentsPage extends StatelessWidget {
 class _CustomerReviewsPage extends StatelessWidget {
   const _CustomerReviewsPage();
 
+  String _maskName(String? name) {
+    final value = (name ?? '').trim();
+    if (value.isEmpty) return 'mi*** mü***';
+    final parts = value.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
+    if (parts.isEmpty) return 'mi*** mü***';
+    final masked = parts.map((part) {
+      final lower = part.toLowerCase();
+      final visible = lower.length >= 2 ? lower.substring(0, 2) : lower;
+      return '$visible***';
+    }).toList();
+    return masked.join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<List<Appointment>>(
       valueListenable: AppointmentStore.instance.appointments,
       builder: (context, list, _) {
-        if (list.isEmpty) {
+        final now = DateTime.now();
+        final reviewable = list
+            .where((a) => a.dateTime.isBefore(now))
+            .toList()
+          ..sort((a, b) => b.dateTime.compareTo(a.dateTime));
+        if (reviewable.isEmpty) {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('Değerlendirebileceğin randevu yok.'),
+              child: Text('Randevu saati gecmis degerlendirebilecegin randevu yok.'),
             ),
           );
         }
 
         Future<void> openReviewDialog(Appointment a) async {
+          if (!a.dateTime.isBefore(DateTime.now())) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Randevu saatinden once degerlendirme yapilamaz.'),
+              ),
+            );
+            return;
+          }
           double rating = a.rating ?? 5;
           final noteCtrl = TextEditingController(text: a.note ?? '');
           await showDialog<void>(
@@ -1284,8 +1698,8 @@ class _CustomerReviewsPage extends StatelessWidget {
                   child: const Text('İptal'),
                 ),
                 FilledButton(
-                  onPressed: () {
-                    AppointmentStore.instance.updateRating(
+                  onPressed: () async {
+                    await AppointmentStore.instance.updateRating(
                       id: a.id,
                       rating: rating,
                       note: noteCtrl.text.trim().isEmpty
@@ -1304,10 +1718,10 @@ class _CustomerReviewsPage extends StatelessWidget {
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: list.length,
+          itemCount: reviewable.length,
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (_, i) {
-            final a = list[i];
+            final a = reviewable[i];
             return Card(
               child: ListTile(
                 leading: const Icon(Icons.rate_review_outlined),
@@ -1315,10 +1729,19 @@ class _CustomerReviewsPage extends StatelessWidget {
                 subtitle: Text(
                   a.rating == null
                       ? 'Henüz değerlendirilmedi'
-                      : 'Puan: ${a.rating!.toStringAsFixed(1)}'
+                      : 'Yorum sahibi: ${_maskName(a.customerName)} • Puan: ${a.rating!.toStringAsFixed(1)}'
                           '${a.note != null && a.note!.isNotEmpty ? ' • "${a.note!}"' : ''}',
                 ),
-                trailing: const Icon(Icons.chevron_right),
+                trailing: a.rating == null
+                    ? const Icon(Icons.chevron_right)
+                    : Icon(
+                        Icons.star,
+                        color: a.rating! >= 4
+                            ? Colors.green
+                            : a.rating! >= 3
+                                ? Colors.amber
+                                : Colors.redAccent,
+                      ),
                 onTap: () => openReviewDialog(a),
               ),
             );
@@ -1329,65 +1752,165 @@ class _CustomerReviewsPage extends StatelessWidget {
   }
 }
 
-class _CustomerSettingsPage extends StatelessWidget {
+class _CustomerSettingsPage extends StatefulWidget {
   const _CustomerSettingsPage();
 
   @override
-  Widget build(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
+  State<_CustomerSettingsPage> createState() => _CustomerSettingsPageState();
+}
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: ListView(
-        children: [
-          Text(
-            'Profil',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Ad Soyad',
-                      prefixIcon: Icon(Icons.person_outline),
+class _CustomerSettingsPageState extends State<_CustomerSettingsPage> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _phoneCtrl;
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameCtrl = TextEditingController();
+    _phoneCtrl = TextEditingController();
+    _syncControllers(CustomerProfileStore.instance.profile.value);
+    CustomerProfileStore.instance.profile.addListener(_onProfileChanged);
+    CustomerProfileStore.instance.refreshProfile();
+  }
+
+  @override
+  void dispose() {
+    CustomerProfileStore.instance.profile.removeListener(_onProfileChanged);
+    _nameCtrl.dispose();
+    _phoneCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onProfileChanged() {
+    _syncControllers(CustomerProfileStore.instance.profile.value);
+  }
+
+  void _syncControllers(CustomerProfileData? profile) {
+    final nextName = profile?.fullName ?? '';
+    final nextPhone = profile?.phone ?? '';
+    if (_nameCtrl.text != nextName) _nameCtrl.text = nextName;
+    if (_phoneCtrl.text != nextPhone) _phoneCtrl.text = nextPhone;
+  }
+
+  Future<void> _pickAvatar() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: kIsWeb,
+    );
+    if (result == null) return;
+    final selected = result.files.single;
+    Uint8List? bytes = selected.bytes;
+    if ((bytes == null || bytes.isEmpty) && !kIsWeb && selected.path != null) {
+      bytes = await File(selected.path!).readAsBytes();
+    }
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null || bytes == null || bytes.isEmpty) return;
+    final avatarSource = await MediaStorage.uploadImage(
+      folder: 'customer/avatar',
+      ownerId: uid,
+      bytes: bytes,
+      extension: selected.extension,
+    );
+    await CustomerProfileStore.instance.updateProfile(
+      fullName: _nameCtrl.text,
+      phone: _phoneCtrl.text,
+      avatarUrl: avatarSource,
+    );
+  }
+
+  Future<void> _saveProfile() async {
+    setState(() => _isSaving = true);
+    try {
+      await CustomerProfileStore.instance.updateProfile(
+        fullName: _nameCtrl.text,
+        phone: _phoneCtrl.text,
+        avatarUrl: CustomerProfileStore.instance.profile.value?.avatarUrl,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Profil kaydedildi.')),
+      );
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<CustomerProfileData?>(
+      valueListenable: CustomerProfileStore.instance.profile,
+      builder: (context, profile, _) {
+        final image = _imageProviderFromSource(profile?.avatarUrl);
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
+              Text(
+                'Profil',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: phoneCtrl,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'Telefon',
-                      prefixIcon: Icon(Icons.phone_outlined),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Profil bilgileriniz yerel olarak güncellendi.'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.save_outlined),
-                    label: const Text('Kaydet'),
-                  ),
-                ],
               ),
-            ),
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: _pickAvatar,
+                            child: CircleAvatar(
+                              radius: 30,
+                              backgroundImage: image,
+                              child: image == null
+                                  ? const Icon(Icons.add_a_photo_outlined)
+                                  : null,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Profil fotografini degistirmek icin fotoya dokun.',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _nameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Ad Soyad',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Telefon',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      FilledButton.icon(
+                        onPressed: _isSaving ? null : _saveProfile,
+                        icon: const Icon(Icons.save_outlined),
+                        label: Text(_isSaving ? 'Kaydediliyor...' : 'Kaydet'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

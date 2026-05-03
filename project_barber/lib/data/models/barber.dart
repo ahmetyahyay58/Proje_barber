@@ -15,6 +15,7 @@ class BarberService {
 class Barber {
   const Barber({
     required this.id,
+    required this.ownerId,
     required this.name,
     required this.city,
     required this.district,
@@ -30,6 +31,7 @@ class Barber {
   });
 
   final String id;
+  final String ownerId;
   final String name;
   final String city;
   final String district;

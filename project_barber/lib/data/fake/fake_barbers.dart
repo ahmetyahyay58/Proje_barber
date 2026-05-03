@@ -4,6 +4,7 @@ List<Barber> buildFakeBarbers() {
   return const [
     Barber(
       id: 'b1',
+      ownerId: 'demo_owner_1',
       name: 'Usta Berber Ahmet',
       city: 'İstanbul',
       district: 'Kadıköy',
@@ -37,6 +38,7 @@ List<Barber> buildFakeBarbers() {
     ),
     Barber(
       id: 'b2',
+      ownerId: 'demo_owner_2',
       name: 'Salon 34',
       city: 'İstanbul',
       district: 'Beşiktaş',
@@ -64,6 +66,7 @@ List<Barber> buildFakeBarbers() {
     ),
     Barber(
       id: 'b3',
+      ownerId: 'demo_owner_3',
       name: 'Ankara Klasik',
       city: 'Ankara',
       district: 'Çankaya',
@@ -91,6 +94,7 @@ List<Barber> buildFakeBarbers() {
     ),
     Barber(
       id: 'b4',
+      ownerId: 'demo_owner_4',
       name: 'İzmir Makas',
       city: 'İzmir',
       district: 'Karşıyaka',

@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   file_picker: ^10.3.10
   google_fonts: ^6.2.1
+  supabase_flutter: ^2.12.2
+  flutter_dotenv: ^6.0.0
+  il_ilce_dropdown: ^0.0.5
 
 dev_dependencies:
   flutter_test:
@@ -63,6 +66,7 @@ flutter:
     - assets/images/logo_original.png
     - assets/images/role_customer_logo.png
     - assets/images/role_barber_logo.png
+    - .env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

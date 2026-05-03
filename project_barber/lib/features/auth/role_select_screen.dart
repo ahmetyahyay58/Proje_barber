@@ -92,7 +92,7 @@ class RoleSelectScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  'Bu proje demo amaçlıdır, veriler cihaz üzerinde tutulur.',
+                  'Kayıtlar bulutta tutulur ve e-posta koduyla doğrulanır.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.5),
