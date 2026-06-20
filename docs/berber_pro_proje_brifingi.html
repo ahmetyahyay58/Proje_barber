@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Berber Pro — Proje Brifing Belgesi (SRS / SDD)</title>
+  <style>
+    :root {
+      --text: #1a1a1a;
+      --muted: #444;
+      --border: #ccc;
+      --accent: #8b6914;
+      --bg: #fff;
+      --code-bg: #f5f5f5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 2.5rem 4rem;
+      font-size: 11pt;
+    }
+    h1 { font-size: 1.85rem; border-bottom: 2px solid var(--accent); padding-bottom: 0.4rem; margin-top: 2rem; }
+    h2 { font-size: 1.35rem; color: #333; margin-top: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+    h3 { font-size: 1.1rem; margin-top: 1.25rem; }
+    h4 { font-size: 1rem; margin-top: 1rem; }
+    p { margin: 0.6rem 0; }
+    ul, ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+    li { margin: 0.25rem 0; }
+    a { color: #0d47a1; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 10pt;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f0f0f0; font-weight: 600; }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9.5pt;
+      background: var(--code-bg);
+    }
+    code { padding: 0.1rem 0.35rem; border-radius: 3px; }
+    pre {
+      padding: 0.75rem 1rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .cover {
+      text-align: center;
+      padding: 2rem 0 3rem;
+      border-bottom: 3px double var(--accent);
+      margin-bottom: 2rem;
+    }
+    .cover h1 { border: none; font-size: 2.2rem; margin: 0; }
+    .cover .subtitle { font-size: 1.1rem; color: var(--muted); margin-top: 0.5rem; }
+    .cover .meta { margin-top: 1.5rem; font-size: 10pt; color: var(--muted); }
+    .toc {
+      background: #fafafa;
+      border: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0 2rem;
+      border-radius: 6px;
+    }
+    .toc h2 { margin-top: 0; border: none; font-size: 1.2rem; }
+    .toc ol { columns: 2; column-gap: 2rem; }
+    .toc a { text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .note {
+      background: #fffde7;
+      border-left: 4px solid #f9a825;
+      padding: 0.75rem 1rem;
+      margin: 1rem 0;
+      font-size: 10pt;
+    }
+    .mermaid {
+      margin: 1.25rem 0;
+      text-align: center;
+    }
+    .print-btn {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      z-index: 1000;
+      padding: 0.6rem 1.2rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 11pt;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .print-btn:hover { background: #333; }
+    @media print {
+      @page { margin: 2cm; }
+      body { padding: 0; max-width: none; font-size: 10pt; }
+      .no-print { display: none !important; }
+      h1, h2, h3 { page-break-after: avoid; }
+      table, pre, .mermaid, .note { page-break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      .toc { columns: 1; }
+    }
+    @media (max-width: 700px) {
+      .toc ol { columns: 1; }
+      body { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="print-btn no-print" type="button" onclick="window.print()">PDF olarak kaydet</button>
+
+<header class="cover" id="kapak">
+  <h1>Berber Pro</h1>
+  <p class="subtitle">Bitirme Projesi — Yazılım Gereksinimleri ve Tasarım Brifing Belgesi</p>
+  <p class="subtitle"><strong>SRS / SDD Rapor Hazırlık Dokümanı</strong></p>
+  <p class="meta">
+    Proje kodu: <code>project_barber</code><br />
+    Platform: Flutter (çapraz platform) + Supabase (BaaS)<br />
+    Belge tarihi: Haziran 2026<br />
+    Amaç: Hocaya sunulacak SRS ve SDD raporlarının hazırlanması için tek kaynak brifing
+  </p>
+</header>
+
+<nav class="toc" id="icindekiler">
+  <h2>İçindekiler</h2>
+  <ol>
+    <li><a href="#ozet">1. Proje Özeti</a></li>
+    <li><a href="#teknoloji">2. Teknoloji Yığını</a></li>
+    <li><a href="#akis">3. Uygulama Akışı</a></li>
+    <li><a href="#aktorler">4. Aktörler</a></li>
+    <li><a href="#fonksiyonel">5. Fonksiyonel Gereksinimler</a></li>
+    <li><a href="#is-kurallari">6. İş Kuralları</a></li>
+    <li><a href="#veri-modeli">7. Veri Modeli</a></li>
+    <li><a href="#mimari">8. Mimari Tasarım</a></li>
+    <li><a href="#durum-akisi">9. Durum Yönetimi ve Veri Akışı</a></li>
+    <li><a href="#ui-ux">10. UI/UX Tasarım Sistemi</a></li>
+    <li><a href="#ekranlar">11. Ekran Envanteri</a></li>
+    <li><a href="#gelistirme">12. Geliştirme Geçmişi</a></li>
+    <li><a href="#sinirlamalar">13. Bilinen Sınırlamalar</a></li>
+    <li><a href="#srs">14. SRS Önerilen Yapı</a></li>
+    <li><a href="#sdd">15. SDD Önerilen Yapı</a></li>
+    <li><a href="#prompt">16. AI Prompt Şablonu</a></li>
+    <li><a href="#kod-ref">17. Kod Referansları</a></li>
+  </ol>
+</nav>
+
+<!-- 1. ÖZET -->
+<section id="ozet">
+  <h1>1. Proje Özeti</h1>
+
+  <h3>1.1 Problem Tanımı</h3>
+  <p>
+    Geleneksel berber/salon randevu süreçleri telefon, walk-in veya dağınık mesajlaşma ile yürütülür.
+    Müşteriler uygun berberi bulmakta, fiyat ve konum karşılaştırmakta zorlanır; berber işletmeleri ise
+    randevu, personel, fiyat ve gelir-gider takibini manuel yapar.
+  </p>
+
+  <h3>1.2 Çözüm</h3>
+  <p>
+    <strong>Berber Pro</strong>, iki rollü (Müşteri / Berber) bir mobil ve masaüstü uyumlu uygulamadır.
+    Müşteriler berber arayıp randevu alır ve değerlendirme yapar; berberler dükkan profilini, hizmet
+    fiyatlarını, personeli, randevuları ve finans özetini tek panelden yönetir.
+  </p>
+
+  <table>
+    <tr><th>Alan</th><th>Değer</th></tr>
+    <tr><td>Proje adı</td><td>Berber Pro</td></tr>
+    <tr><td>Kod deposu</td><td><code>project_barber</code></td></tr>
+    <tr><td>Tür</td><td>Bitirme / mezuniyet projesi</td></tr>
+    <tr><td>UI dili</td><td>Türkçe</td></tr>
+    <tr><td>Tema</td><td>Koyu mod, premium berber estetiği (bronz/latte vurgu)</td></tr>
+    <tr><td>Hedef platformlar</td><td>Android, iOS, Web, Windows, Linux, macOS (Flutter)</td></tr>
+  </table>
+</section>
+
+<!-- 2. TEKNOLOJİ -->
+<section id="teknoloji">
+  <h1>2. Teknoloji Yığını</h1>
+
+  <h3>2.1 Frontend</h3>
+  <ul>
+    <li><strong>Flutter</strong> — Dart SDK <code>&gt;=3.0.0 &lt;4.0.0</code></li>
+    <li><strong>Material Design 3</strong> — Özelleştirilmiş tema (<code>lib/app/app_theme.dart</code>)</li>
+    <li><strong>Google Fonts</strong> — Plus Jakarta Sans</li>
+  </ul>
+
+  <h3>2.2 Backend (BaaS)</h3>
+  <ul>
+    <li><strong>Supabase</strong> — PostgreSQL, Auth, Realtime, Storage</li>
+    <li>Ortam değişkenleri: <code>.env</code> → <code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code></li>
+    <li>Başlatma: <code>lib/main.dart</code></li>
+  </ul>
+
+  <h3>2.3 Bağımlılıklar</h3>
+  <table>
+    <tr><th>Paket</th><th>Sürüm (yaklaşık)</th><th>Kullanım</th></tr>
+    <tr><td><code>supabase_flutter</code></td><td>^2.12</td><td>Auth, veritabanı, realtime, storage</td></tr>
+    <tr><td><code>flutter_dotenv</code></td><td>^6.0</td><td>.env yükleme</td></tr>
+    <tr><td><code>geolocator</code></td><td>^14.0</td><td>Müşteri "Yakınımda" filtresi</td></tr>
+    <tr><td><code>flutter_map</code> + <code>latlong2</code></td><td>^8.2 / ^0.9</td><td>Berber konum seçici harita</td></tr>
+    <tr><td><code>file_picker</code></td><td>^10.3</td><td>Profil / galeri / gider fişi fotoğrafı</td></tr>
+    <tr><td><code>fl_chart</code></td><td>^1.2</td><td>Finans pasta grafikleri</td></tr>
+    <tr><td><code>il_ilce_dropdown</code></td><td>^0.0.5</td><td>Berber kayıt il/ilçe seçimi</td></tr>
+    <tr><td><code>google_fonts</code></td><td>^6.2</td><td>Tipografi</td></tr>
+  </ul>
+
+  <h3>2.4 Durum Yönetimi</h3>
+  <p>
+    Riverpod, Bloc veya Provider kullanılmaz. Singleton <strong>Store</strong> sınıfları
+    <code>ValueNotifier</code> ile reaktif güncelleme sağlar; UI <code>ValueListenableBuilder</code> ile dinler.
+  </p>
+  <table>
+    <tr><th>Store</th><th>Dosya</th><th>Sorumluluk</th></tr>
+    <tr><td><code>BarberStore</code></td><td><code>lib/data/stores/barber_store.dart</code></td><td>Berber ve hizmet CRUD</td></tr>
+    <tr><td><code>AppointmentStore</code></td><td><code>lib/data/stores/appointment_store.dart</code></td><td>Randevu, puan, realtime</td></tr>
+    <tr><td><code>CustomerProfileStore</code></td><td><code>lib/data/stores/customer_profile_store.dart</code></td><td>Müşteri profili</td></tr>
+    <tr><td><code>BarberExpenseStore</code></td><td><code>lib/data/stores/barber_expense_store.dart</code></td><td>Gider kayıtları</td></tr>
+    <tr><td><code>WorkingDaysStore</code></td><td><code>lib/data/stores/working_days_store.dart</code></td><td>İzin günleri (yerel bellek)</td></tr>
+  </table>
+</section>
+
+<!-- 3. AKIŞ -->
+<section id="akis">
+  <h1>3. Uygulama Akışı</h1>
+
+  <h3>3.1 Route Tanımları</h3>
+  <table>
+    <tr><th>Route</th><th>Sabit</th><th>Ekran</th></tr>
+    <tr><td><code>/</code></td><td><code>Routes.splash</code></td><td>Splash</td></tr>
+    <tr><td><code>/role</code></td><td><code>Routes.roleSelect</code></td><td>Rol seçimi</td></tr>
+    <tr><td><code>/login/customer</code></td><td><code>Routes.customerLogin</code></td><td>Müşteri giriş/kayıt</td></tr>
+    <tr><td><code>/login/barber</code></td><td><code>Routes.barberLogin</code></td><td>Berber giriş/kayıt</td></tr>
+    <tr><td><code>/customer</code></td><td><code>Routes.customerShell</code></td><td>Müşteri ana kabuk</td></tr>
+    <tr><td><code>/barber</code></td><td><code>Routes.barberShell</code></td><td>Berber ana kabuk</td></tr>
+  </table>
+
+  <h3>3.2 Akış Diyagramı</h3>
+  <pre class="mermaid">
+flowchart TD
+  Splash[Splash 1.2sn] --> RoleSelect[Rol Secimi]
+  RoleSelect --> CustomerLogin[Musteri Giris/Kayit]
+  RoleSelect --> BarberLogin[Berber Giris/Kayit]
+  CustomerLogin --> CustomerShell[CustomerShell]
+  BarberLogin --> BarberShell[BarberShell]
+  CustomerShell --> FindBarber[Berber Ara]
+  CustomerShell --> MyAppts[Randevularim]
+  CustomerShell --> Reviews[Degerlendirmeler]
+  CustomerShell --> CustSettings[Ayarlar]
+  BarberShell --> ShopHome[Dukkanim]
+  BarberShell --> Finance[Finans]
+  BarberShell --> BarberAppts[Randevular]
+  BarberShell --> Staff[Elemanlar]
+  BarberShell --> Prices[Fiyat Listesi]
+  BarberShell --> DaysOff[Izin Gunleri]
+  BarberShell --> BarberSettings[Genel Ayarlar]
+  </pre>
+  <p class="note"><strong>Not:</strong> Diyagramlar Mermaid CDN ile render edilir. PDF almadan önce 2–3 saniye bekleyin.</p>
+</section>
+
+<!-- 4. AKTÖRLER -->
+<section id="aktorler">
+  <h1>4. Aktörler</h1>
+
+  <h3>4.1 Müşteri (Customer)</h3>
+  <ul>
+    <li>E-posta ve şifre ile kayıt olur / giriş yapar</li>
+    <li>Ad, telefon ve profil fotoğrafı tutar</li>
+    <li>Berber arar, filtreler, randevu alır</li>
+    <li>Randevularını görür; koşullu iptal eder</li>
+    <li>Geçmiş randevuları değerlendirir (puan + yorum)</li>
+  </ul>
+
+  <h3>4.2 Berber (Barber / Dükkan Sahibi)</h3>
+  <ul>
+    <li>Dükkan bilgileriyle kayıt olur (ad, il, ilçe, adres)</li>
+    <li>Dükkan profilini yönetir (fotoğraf, galeri, hakkımda, harita konumu)</li>
+    <li>Hizmet/fiyat listesi tanımlar</li>
+    <li>Personel (usta) ekler ve çıkarır</li>
+    <li>Randevuları listeler (gelecek / geçmiş)</li>
+    <li>Finans takibi yapar (gelir, gider, grafik)</li>
+    <li>İzin günlerini ayarlar</li>
+  </ul>
+</section>
+
+<!-- 5. FONKSİYONEL -->
+<section id="fonksiyonel">
+  <h1>5. Fonksiyonel Gereksinimler</h1>
+
+  <h3>5.1 Kimlik Doğrulama</h3>
+  <h4>FR-AUTH-01 — Müşteri girişi</h4>
+  <p>E-posta + şifre ile Supabase Auth <code>signInWithPassword</code>. Başarıda <code>CustomerProfileStore</code> yenilenir ve <code>CustomerShell</code> açılır.</p>
+  <p><strong>Kaynak:</strong> <code>lib/features/auth/customer_login_screen.dart</code></p>
+
+  <h4>FR-AUTH-02 — Müşteri kaydı</h4>
+  <p>Ad, telefon, e-posta, şifre ile kayıt; <code>profiles</code> tablosuna upsert.</p>
+
+  <h4>FR-AUTH-03 — Berber girişi / kaydı</h4>
+  <p>Berber kayıtta dükkan adı, il, ilçe, adres zorunlu. <code>BarberStore.upsertCurrentUserBarber()</code> ile <code>barbers</code> kaydı oluşturulur.</p>
+  <p><strong>Kaynak:</strong> <code>lib/features/auth/barber_login_screen.dart</code></p>
+
+  <h3>5.2 Müşteri Modülü</h3>
+  <p><strong>Kaynak:</strong> <code>lib/features/customer/customer_shell.dart</code></p>
+
+  <table>
+    <tr><th>FR-ID</th><th>Menü</th><th>İşlev</th></tr>
+    <tr><td>FR-C-01</td><td>Berber Pro (Ana)</td><td>Berber listeleme, metin arama (ad/şehir/ilçe)</td></tr>
+    <tr><td>FR-C-02</td><td>Berber Pro</td><td>"Yakınımda" — Geolocator ile mesafe sıralaması</td></tr>
+    <tr><td>FR-C-03</td><td>Berber Pro</td><td>Puan veya Fiyat sıralaması (kompakt toggle)</td></tr>
+    <tr><td>FR-C-04</td><td>Berber Pro</td><td>Canlı puan: appointments ortalaması</td></tr>
+    <tr><td>FR-C-05</td><td>Berber Pro</td><td>Randevu sheet: hizmet, usta, tarih, saat seçimi</td></tr>
+    <tr><td>FR-C-06</td><td>Berber Pro</td><td>Profil kartı: selamlama + banner + avatar (foto veya ilk harf)</td></tr>
+    <tr><td>FR-C-07</td><td>Randevularım</td><td>Yaklaşan / Geçmiş sekmeleri</td></tr>
+    <tr><td>FR-C-08</td><td>Randevularım</td><td>İptal (randevuya ≥4 saat kala)</td></tr>
+    <tr><td>FR-C-09</td><td>Değerlendirmeler</td><td>Geçmiş randevulara yıldız + not</td></tr>
+    <tr><td>FR-C-10</td><td>Ayarlar</td><td>Ad, telefon, profil fotoğrafı (Supabase Storage)</td></tr>
+  </table>
+
+  <h4>Randevu oluşturma detayı</h4>
+  <ul>
+    <li>Çoklu hizmet seçimi → toplam süre ve fiyat</li>
+    <li>İzin günleri hariç tarih (~14 gün ileri)</li>
+    <li>Slot çakışması: Postgres exclusion constraint (kod <code>23P01</code>) → <code>AppointmentSlotTakenException</code></li>
+  </ul>
+
+  <h3>5.3 Berber Modülü</h3>
+  <p><strong>Kaynak:</strong> <code>lib/features/barber/barber_shell.dart</code></p>
+
+  <table>
+    <tr><th>FR-ID</th><th>Menü</th><th>İşlev</th></tr>
+    <tr><td>FR-B-01</td><td>Dükkanım</td><td>Dashboard: dükkan kartı, istatistikler, hızlı erişim</td></tr>
+    <tr><td>FR-B-02</td><td>Dükkanım</td><td>Canlı puan (appointments ortalaması)</td></tr>
+    <tr><td>FR-B-03</td><td>Finans</td><td>Son 30 gün gelir/gider, net kâr, pasta grafik</td></tr>
+    <tr><td>FR-B-04</td><td>Finans</td><td>Gider ekleme (başlık, tutar, tarih, açıklama, fiş fotoğrafı)</td></tr>
+    <tr><td>FR-B-05</td><td>Randevular</td><td>Gelecek (1 ay) / Geçmiş (90 gün), tarih ve eleman filtresi</td></tr>
+    <tr><td>FR-B-06</td><td>Elemanlar</td><td><code>masters</code> listesi CRUD</td></tr>
+    <tr><td>FR-B-07</td><td>Fiyat Listesi</td><td><code>barber_services</code> CRUD (ad, süre, fiyat)</td></tr>
+    <tr><td>FR-B-08</td><td>İzin Günleri</td><td>Haftalık izin toggle (yerel store)</td></tr>
+    <tr><td>FR-B-09</td><td>Genel Ayarlar</td><td>Profil, hakkımda, galeri (max 10 foto), harita konumu</td></tr>
+    <tr><td>FR-B-10</td><td>Navigasyon</td><td>Drawer sayfa geçişi: AnimatedSwitcher slide+fade</td></tr>
+  </table>
+
+  <h4>Medya yükleme</h4>
+  <p>Bucket: <code>app-media</code>. Klasörler: <code>customer/avatar</code>, <code>barber/avatar</code>, <code>barber/gallery</code>.</p>
+  <p><strong>Kaynak:</strong> <code>lib/data/storage/media_storage.dart</code></p>
+
+  <h4>Konum seçici</h4>
+  <p><code>LocationPickerScreen</code> — flutter_map, pin seçimi, "konumumu kullan", lat/lng kaydı.</p>
+  <p><strong>Kaynak:</strong> <code>lib/features/barber/location_picker_screen.dart</code></p>
+</section>
+
+<!-- 6. İŞ KURALLARI -->
+<section id="is-kurallari">
+  <h1>6. İş Kuralları</h1>
+  <table>
+    <tr><th>Kural</th><th>Açıklama</th></tr>
+    <tr><td>BR-01</td><td>Aynı slota iki randevu alınamaz (DB exclusion constraint)</td></tr>
+    <tr><td>BR-02</td><td>Randevu iptali yalnızca randevuya ≥4 saat kala mümkün</td></tr>
+    <tr><td>BR-03</td><td><code>status=cancelled</code> randevular listede gösterilmez</td></tr>
+    <tr><td>BR-04</td><td>Değerlendirme yalnızca geçmiş randevular için</td></tr>
+    <tr><td>BR-05</td><td>Berber galerisine en fazla 10 fotoğraf</td></tr>
+    <tr><td>BR-06</td><td>İzin günlerinde müşteri o gün için tarih seçemez</td></tr>
+    <tr><td>BR-07</td><td>"Yakınımda" için konum izni gerekir</td></tr>
+    <tr><td>BR-08</td><td>Berber kayıtta il, ilçe, adres zorunlu</td></tr>
+    <tr><td>BR-09</td><td>Müşteri kayıtta ad minimum 3 karakter</td></tr>
+    <tr><td>BR-10</td><td>Liste puanı: değerlendirme varsa appointments ortalaması; yoksa barbers.rating</td></tr>
+  </table>
+</section>
+
+<!-- 7. VERİ MODELİ -->
+<section id="veri-modeli">
+  <h1>7. Veri Modeli</h1>
+
+  <h3>7.1 Dart Modelleri</h3>
+  <table>
+    <tr><th>Model</th><th>Dosya</th><th>Alanlar (özet)</th></tr>
+    <tr><td><code>Barber</code></td><td><code>lib/data/models/barber.dart</code></td><td>id, ownerId, name, city, district, address, lat, lng, rating, min/maxPrice, avatarPath, galleryPaths, about, masters, services</td></tr>
+    <tr><td><code>BarberService</code></td><td>aynı</td><td>id, name, durationMinutes, price</td></tr>
+    <tr><td><code>Appointment</code></td><td><code>lib/data/models/appointment.dart</code></td><td>id, barberId, barberName, dateTime, durationMinutes, totalAmount, customerId/Name/Phone, serviceNames, masterName, rating, note</td></tr>
+    <tr><td><code>BarberExpense</code></td><td><code>lib/data/models/barber_expense.dart</code></td><td>id, barberId, title, amount, incurredOn, description, imageUrl</td></tr>
+  </table>
+
+  <h3>7.2 Supabase Tabloları</h3>
+  <table>
+    <tr><th>Tablo</th><th>Ana alanlar</th><th>İşlemler</th></tr>
+    <tr><td><code>profiles</code></td><td>id, full_name, phone, avatar_url</td><td>Müşteri profili</td></tr>
+    <tr><td><code>barbers</code></td><td>owner_id, name, city, district, address, lat, lng, rating, min_price, max_price, avatar_url, gallery_urls, about, masters</td><td>Berber CRUD</td></tr>
+    <tr><td><code>barber_services</code></td><td>barber_id, name, duration_minutes, price</td><td>Hizmet CRUD</td></tr>
+    <tr><td><code>appointments</code></td><td>customer_id, barber_id, start_at, duration_minutes, total_amount, service_names, master_name, rating, note, status</td><td>Randevu + değerlendirme</td></tr>
+    <tr><td><code>barber_expenses</code></td><td>barber_id, title, amount, incurred_on, description, image_url</td><td>Gider</td></tr>
+  </table>
+
+  <h3>7.3 ER Diyagramı (özet)</h3>
+  <pre class="mermaid">
+erDiagram
+  profiles ||--o{ appointments : "musteri"
+  barbers ||--o{ appointments : "berber"
+  barbers ||--o{ barber_services : "hizmet"
+  barbers ||--o{ barber_expenses : "gider"
+  profiles {
+    uuid id PK
+    string full_name
+    string phone
+    string avatar_url
+  }
+  barbers {
+    uuid id PK
+    uuid owner_id FK
+    string name
+    string city
+    string district
+    float lat
+    float lng
+    float rating
+    json masters
+    json gallery_urls
+  }
+  appointments {
+    uuid id PK
+    uuid customer_id FK
+    uuid barber_id FK
+    timestamp start_at
+    int duration_minutes
+    float rating
+    string status
+  }
+  </pre>
+</section>
+
+<!-- 8. MİMARİ -->
+<section id="mimari">
+  <h1>8. Mimari Tasarım</h1>
+
+  <h3>8.1 Katman Diyagramı</h3>
+  <pre class="mermaid">
+flowchart TB
+  subgraph presentation [Sunum Katmani]
+    Features[features/ ekranlar]
+    Widgets[widgets/ ortak UI]
+  end
+  subgraph domain [Veri Katmani]
+    Stores[data/stores/]
+    Models[data/models/]
+    Storage[data/storage/]
+  end
+  subgraph backend [Supabase]
+    Auth[Auth]
+    DB[PostgreSQL]
+    RT[Realtime]
+    ST[Storage app-media]
+  end
+  Features --> Stores
+  Features --> Widgets
+  Stores --> Models
+  Stores --> DB
+  Stores --> Auth
+  Stores --> RT
+  Storage --> ST
+  </pre>
+
+  <h3>8.2 Klasör Yapısı</h3>
+  <pre>
+lib/
+├── main.dart
+├── app/           app.dart, app_theme.dart, routes.dart
+├── features/
+│   ├── splash/
+│   ├── auth/      role_select, customer_login, barber_login
+│   ├── customer/  customer_shell.dart
+│   └── barber/    barber_shell.dart, location_picker_screen.dart
+├── data/
+│   ├── models/
+│   ├── stores/
+│   ├── storage/
+│   ├── auth/
+│   └── fake/
+└── widgets/       modern_ui, modern_settings_ui, finance_pie_chart, ...
+  </pre>
+
+  <h3>8.3 Shell Pattern</h3>
+  <p>
+    <code>ModernAppShell</code> (<code>lib/widgets/modern_ui.dart</code>) ortak Scaffold, AppBar ve Drawer sağlar.
+    Müşteri ve berber kabukları menü seçimine göre gövde widget'ını değiştirir.
+    Berber tarafında <code>AnimatedSwitcher</code> ile sayfa geçiş animasyonu uygulanır.
+  </p>
+</section>
+
+<!-- 9. DURUM AKIŞI -->
+<section id="durum-akisi">
+  <h1>9. Durum Yönetimi ve Veri Akışı</h1>
+
+  <h3>9.1 ValueNotifier Akışı</h3>
+  <ol>
+    <li>Store singleton oluşturulur, <code>refresh*()</code> ile Supabase'den veri çekilir</li>
+    <li><code>ValueNotifier.value</code> güncellenir</li>
+    <li><code>ValueListenableBuilder</code> ilgili UI'ı yeniden çizer</li>
+  </ol>
+
+  <h3>9.2 Realtime — Randevular</h3>
+  <p><code>AppointmentStore</code> → <code>appointments</code> tablosunda Postgres değişikliklerini dinler; callback'te <code>refreshAppointments()</code> çağrılır.</p>
+
+  <h3>9.3 Randevu Alma Sequence</h3>
+  <pre class="mermaid">
+sequenceDiagram
+  participant M as Musteri UI
+  participant AS as AppointmentStore
+  participant SB as Supabase
+  participant RT as Realtime
+  M->>AS: createAppointment
+  AS->>SB: INSERT appointments
+  alt Slot dolu 23P01
+    SB-->>AS: Hata
+    AS-->>M: SlotTakenException
+  else Basarili
+    SB-->>AS: OK
+    AS->>AS: refreshAppointments
+    RT-->>AS: Postgres change
+    AS-->>M: UI guncellenir
+  end
+  </pre>
+
+  <h3>9.4 Değerlendirme Sonrası Puan</h3>
+  <ol>
+    <li><code>AppointmentStore.updateRating()</code> → appointments.rating güncelle</li>
+    <li><code>refreshAppointments()</code> + <code>BarberStore.refreshBarbers()</code></li>
+    <li>Müşteri listesinde ve berber Dükkanım'da ortalama appointments'tan hesaplanır</li>
+  </ol>
+</section>
+
+<!-- 10. UI/UX -->
+<section id="ui-ux">
+  <h1>10. UI/UX Tasarım Sistemi</h1>
+
+  <h3>10.1 Renk Paleti (AppTheme)</h3>
+  <table>
+    <tr><th>Token</th><th>Değer / Açıklama</th></tr>
+    <tr><td>surfaceBase</td><td>#2C2B28 — ana zemin</td></tr>
+    <tr><td>accent</td><td>#BE9B6E — bronz vurgu</td></tr>
+    <tr><td>textPrimary</td><td>#EEEDEB</td></tr>
+    <tr><td>success / error / info</td><td>Yeşil / kırmızımsı / mavi-gri</td></tr>
+  </table>
+
+  <h3>10.2 Ortak Bileşenler</h3>
+  <ul>
+    <li><code>ModernAppShell</code> — ortak kabuk</li>
+    <li><code>PremiumAvatar</code> — berber kartlarında avatar + baş harf</li>
+    <li><code>SettingsProfileHeader</code> — ayarlar profil başlığı</li>
+    <li><code>glassCard()</code> — cam efektli kartlar</li>
+    <li><code>HoverLift</code> — kart hover animasyonu (web/masaüstü)</li>
+    <li><code>FinancePieChartCard</code> — finans grafikleri</li>
+  </ul>
+
+  <h3>10.3 Profil Kartı Tasarımı (Berber Dükkanım / Müşteri Ana)</h3>
+  <ul>
+    <li>Yuvarlatılmış kutu, üstte gradient banner</li>
+    <li>Ortada banner'a taşan dairesel avatar (çerçeve + gölge)</li>
+    <li>Altında isim, konum/telefon veya rozet bilgileri</li>
+    <li>Müşteri: fotoğraf yoksa adın ilk harfi renkli arka planda</li>
+    <li>Dinamik selamlama: Günaydın / İyi günler / İyi akşamlar + Hoş geldin mesajı</li>
+  </ul>
+</section>
+
+<!-- 11. EKRANLAR -->
+<section id="ekranlar">
+  <h1>11. Ekran Envanteri</h1>
+  <table>
+    <tr><th>#</th><th>Ekran</th><th>Dosya</th><th>Rol</th></tr>
+    <tr><td>1</td><td>Splash</td><td>splash_screen.dart</td><td>Ortak</td></tr>
+    <tr><td>2</td><td>Rol seçimi</td><td>role_select_screen.dart</td><td>Ortak</td></tr>
+    <tr><td>3</td><td>Müşteri giriş/kayıt</td><td>customer_login_screen.dart</td><td>Müşteri</td></tr>
+    <tr><td>4</td><td>Berber giriş/kayıt</td><td>barber_login_screen.dart</td><td>Berber</td></tr>
+    <tr><td>5</td><td>Berber ara (ana)</td><td>customer_shell.dart</td><td>Müşteri</td></tr>
+    <tr><td>6</td><td>Randevu bottom sheet</td><td>customer_shell.dart</td><td>Müşteri</td></tr>
+    <tr><td>7</td><td>Randevularım</td><td>customer_shell.dart</td><td>Müşteri</td></tr>
+    <tr><td>8</td><td>Değerlendirmeler</td><td>customer_shell.dart</td><td>Müşteri</td></tr>
+    <tr><td>9</td><td>Müşteri ayarlar</td><td>customer_shell.dart</td><td>Müşteri</td></tr>
+    <tr><td>10</td><td>Dükkanım</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>11</td><td>Finans</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>12</td><td>Randevular</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>13</td><td>Elemanlar</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>14</td><td>Fiyat listesi</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>15</td><td>İzin günleri</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>16</td><td>Genel ayarlar</td><td>barber_shell.dart</td><td>Berber</td></tr>
+    <tr><td>17</td><td>Konum seçici harita</td><td>location_picker_screen.dart</td><td>Berber</td></tr>
+  </table>
+</section>
+
+<!-- 12. GELİŞTİRME -->
+<section id="gelistirme">
+  <h1>12. Geliştirme Geçmişi (Cursor ile)</h1>
+
+  <h3>12.1 Birinci Tur — 9 Ana Düzeltme</h3>
+  <ol>
+    <li>Sağ alt grimsi katman: <code>ModernAppShell</code> resizeToAvoidBottomInset, ClipRect, düz arka plan</li>
+    <li>Müşteri avatar: fotoğraf veya ilk harf; berber avatar büyütüldü</li>
+    <li>Dinamik selamlama eklendi</li>
+    <li>Berber menü geçiş takılması: anında navigasyon + AnimatedSwitcher</li>
+    <li>VIP etiketi kaldırıldı</li>
+    <li>Kategori filtre chip'leri kaldırıldı (Tümü, Saç Kesimi, Sakal vb.)</li>
+    <li>Yakınımda + Puan/Fiyat butonları küçültüldü ve hizalandı</li>
+    <li>Galeri limiti 3 → 10 fotoğraf</li>
+    <li>Dükkanım puanı: appointments ortalamasından canlı hesaplama</li>
+  </ol>
+
+  <h3>12.2 İkinci Tur — İnce Ayarlar</h3>
+  <ul>
+    <li>Berber dükkan fotoğrafı radius 48 → 56</li>
+    <li>Müşteri avatar selamlama metninin altına alındı</li>
+    <li>Puan/Fiyat için özel <code>_SortToggleChip</code> (SegmentedButton yerine)</li>
+  </ul>
+
+  <h3>12.3 Üçüncü Tur — Müşteri Profil Kartı</h3>
+  <ul>
+    <li>Müşteri ana ekran profil alanı berber Dükkanım kartıyla aynı kutu tasarımına getirildi</li>
+    <li>Banner + taşan avatar + isim/telefon düzeni</li>
+  </ul>
+</section>
+
+<!-- 13. SINIRLAMALAR -->
+<section id="sinirlamalar">
+  <h1>13. Bilinen Sınırlamalar</h1>
+  <table>
+    <tr><th>#</th><th>Sınırlama</th></tr>
+    <tr><td>1</td><td>İzin günleri yalnızca <code>WorkingDaysStore</code> belleğinde; Supabase'e yazılmıyor</td></tr>
+    <tr><td>2</td><td><code>barbers.rating</code> DB alanı ile UI'daki canlı ortalama tam senkron değil; UI appointments'tan hesaplıyor</td></tr>
+    <tr><td>3</td><td>README henüz proje dokümantasyonu içermiyor (varsayılan Flutter şablonu)</td></tr>
+    <tr><td>4</td><td>Birim/entegrasyon testleri minimal</td></tr>
+    <tr><td>5</td><td>Ödeme entegrasyonu yok</td></tr>
+    <tr><td>6</td><td>Push bildirim yok</td></tr>
+    <tr><td>7</td><td>Admin paneli yok</td></tr>
+    <tr><td>8</td><td>Supabase RLS politikaları kod deposunda tanımlı değil (sunucu tarafı ayrı yönetilir)</td></tr>
+  </table>
+</section>
+
+<!-- 14. SRS -->
+<section id="srs">
+  <h1>14. SRS Önerilen Bölüm Yapısı (IEEE 830 tarzı)</h1>
+  <ol>
+    <li><strong>Giriş</strong> — Amaç, kapsam, tanımlar, referanslar</li>
+    <li><strong>Genel Tanım</strong> — Ürün perspektifi, işlevler, kullanıcı özellikleri, kısıtlar</li>
+    <li><strong>Özel Gereksinimler</strong>
+      <ul>
+        <li>Fonksiyonel gereksinimler (FR-AUTH-*, FR-C-*, FR-B-*)</li>
+        <li>Fonksiyonel olmayan: performans, güvenlik, kullanılabilirlik, Türkçe UI</li>
+        <li>Dış arayüz: Supabase REST/Realtime, Geolocator, harita tile</li>
+      </ul>
+    </li>
+    <li><strong>Ekler</strong> — Ekran görüntüleri, kabul kriterleri (Given/When/Then)</li>
+  </ol>
+
+  <h3>Örnek Kabul Kriteri — FR-C-05 Randevu Alma</h3>
+  <table>
+    <tr><th>Given</th><th>When</th><th>Then</th></tr>
+    <tr>
+      <td>Müşteri giriş yapmış ve berber kartına tıklamış</td>
+      <td>Hizmet, tarih, saat seçip onaylar</td>
+      <td>Randevu appointments tablosuna kaydedilir ve listede görünür</td>
+    </tr>
+    <tr>
+      <td>Seçilen slot dolu</td>
+      <td>Onaylar</td>
+      <td>SlotTaken hatası gösterilir, randevu oluşmaz</td>
+    </tr>
+  </table>
+</section>
+
+<!-- 15. SDD -->
+<section id="sdd">
+  <h1>15. SDD Önerilen Bölüm Yapısı (IEEE 1016 tarzı)</h1>
+  <ol>
+    <li><strong>Tasarım Genel Bakış</strong> — 3 katman: Flutter UI → Store → Supabase</li>
+    <li><strong>Mimari Tasarım</strong> — Bileşen diyagramı, shell pattern</li>
+    <li><strong>Veri Tasarımı</strong> — ER diyagramı, tablo şemaları</li>
+    <li><strong>Arayüz Tasarımı</strong> — Ekran envanteri, navigasyon</li>
+    <li><strong>İşlem Tasarımı</strong> — Sequence: randevu, değerlendirme, gider</li>
+    <li><strong>Durum Yönetimi</strong> — ValueNotifier + Realtime</li>
+    <li><strong>Güvenlik</strong> — Supabase Auth, anon key, RLS varsayımı</li>
+    <li><strong>Dağıtım</strong> — .env, platform build notları</li>
+  </ol>
+</section>
+
+<!-- 16. PROMPT -->
+<section id="prompt">
+  <h1>16. AI Prompt Şablonu</h1>
+  <p>Arkadaşınız aşağıdaki metni SRS/SDD hazırlayan AI'a verebilir:</p>
+  <pre>
+Berber Pro adlı Flutter + Supabase berber randevu uygulaması için Türkçe SRS ve SDD hazırla.
+
+Bağlam: Bu belge (berber_pro_proje_brifingi.html veya PDF çıktısı) projenin tek kaynak brifingidir.
+
+Gereksinimler:
+- SRS: IEEE 830 tarzı, FR-ID ile numaralı fonksiyonel gereksinimler
+- SDD: IEEE 1016 tarzı, mimari/veri/sequence diyagramları (Mermaid)
+- Aktörler: Müşteri ve Berber
+- Teknoloji: Flutter, Supabase (Auth, PostgreSQL, Realtime, Storage)
+- Tüm bölümler Türkçe olsun
+- Her ana FR için kabul kriteri (Given/When/Then) ekle
+- Bilinen sınırlamaları "Kapsam Dışı" veya "Gelecek İş" olarak belirt
+  </pre>
+</section>
+
+<!-- 17. KOD REF -->
+<section id="kod-ref">
+  <h1>17. Kod Referansları — Store / Tablo Eşlemesi</h1>
+  <table>
+    <tr><th>Store metodu</th><th>Supabase hedefi</th></tr>
+    <tr><td><code>CustomerProfileStore.refreshProfile</code></td><td>SELECT profiles</td></tr>
+    <tr><td><code>CustomerProfileStore.updateProfile</code></td><td>UPSERT profiles</td></tr>
+    <tr><td><code>BarberStore.refreshBarbers</code></td><td>SELECT barbers + barber_services</td></tr>
+    <tr><td><code>BarberStore.updateCurrentBarberProfile</code></td><td>UPDATE barbers (name, about, avatar_url, gallery_urls)</td></tr>
+    <tr><td><code>BarberStore.updateCurrentBarberLocation</code></td><td>UPDATE barbers (lat, lng)</td></tr>
+    <tr><td><code>BarberStore.upsertService / deleteService</code></td><td>INSERT/UPDATE/DELETE barber_services</td></tr>
+    <tr><td><code>AppointmentStore.createAppointment</code></td><td>INSERT appointments</td></tr>
+    <tr><td><code>AppointmentStore.updateRating</code></td><td>UPDATE appointments (rating, note)</td></tr>
+    <tr><td><code>AppointmentStore.cancelAppointment</code></td><td>UPDATE appointments status=cancelled</td></tr>
+    <tr><td><code>BarberExpenseStore.addExpense</code></td><td>INSERT barber_expenses</td></tr>
+    <tr><td><code>MediaStorage.uploadImage</code></td><td>Storage app-media bucket</td></tr>
+  </table>
+
+  <p style="margin-top: 2rem; font-size: 10pt; color: #666; text-align: center;">
+    — Belge sonu — Berber Pro / project_barber — SRS·SDD Brifing — Haziran 2026 —
+  </p>
+</section>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'neutral',
+    securityLevel: 'loose',
+    flowchart: { useMaxWidth: true },
+    sequence: { useMaxWidth: true }
+  });
+</script>
+</body>
+</html>
