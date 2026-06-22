@@ -6,8 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/routes.dart';
+import '../../data/auth/session_service.dart';
 import '../../data/models/appointment.dart';
 import '../../data/models/barber.dart';
 import '../../data/storage/media_storage.dart';
@@ -123,7 +126,10 @@ class _CustomerShellState extends State<CustomerShell> {
     }
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    await SessionService.clearRole();
+    await Supabase.instance.client.auth.signOut();
+    if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.roleSelect,
       (_) => false,
@@ -1645,6 +1651,37 @@ class _BookAppointmentSheetState extends State<_BookAppointmentSheet> {
             label: const Text('Yol Tarifi Al'),
           ),
         ],
+        if ((widget.barber.instagramUrl?.isNotEmpty ?? false) ||
+            (widget.barber.tiktokUrl?.isNotEmpty ?? false)) ...[
+          const SizedBox(height: AppTheme.spacingSm),
+          Row(
+            children: [
+              if (widget.barber.instagramUrl?.isNotEmpty ?? false)
+                _SocialButton(
+                  label: 'Instagram',
+                  color: const Color(0xFFE1306C),
+                  faIcon: FontAwesomeIcons.instagram,
+                  onTap: () => launchUrl(
+                    Uri.parse(widget.barber.instagramUrl!),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+              if ((widget.barber.instagramUrl?.isNotEmpty ?? false) &&
+                  (widget.barber.tiktokUrl?.isNotEmpty ?? false))
+                const SizedBox(width: 8),
+              if (widget.barber.tiktokUrl?.isNotEmpty ?? false)
+                _SocialButton(
+                  label: 'TikTok',
+                  color: const Color(0xFF010101),
+                  faIcon: FontAwesomeIcons.tiktok,
+                  onTap: () => launchUrl(
+                    Uri.parse(widget.barber.tiktokUrl!),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: AppTheme.spacingMd),
         if (widget.barber.galleryPaths.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -2540,6 +2577,51 @@ class _NavItem extends StatelessWidget {
                 height: 1.0,
               ),
               child: Text(label),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.label,
+    required this.color,
+    required this.faIcon,
+    required this.onTap,
+  });
+
+  final String label;
+  final Color color;
+  final IconData faIcon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          border: Border.all(color: color.withValues(alpha: 0.40)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(faIcon, size: 18, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
             ),
           ],
         ),

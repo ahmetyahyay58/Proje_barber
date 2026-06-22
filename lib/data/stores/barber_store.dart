@@ -120,6 +120,8 @@ class BarberStore {
     String? about,
     String? avatarUrl,
     List<String>? galleryUrls,
+    String? instagramUrl,
+    String? tiktokUrl,
   }) async {
     final barber = currentUserBarber;
     if (barber == null) return;
@@ -128,6 +130,8 @@ class BarberStore {
     if (about != null) payload['about'] = about;
     if (avatarUrl != null) payload['avatar_url'] = avatarUrl;
     if (galleryUrls != null) payload['gallery_urls'] = galleryUrls;
+    if (instagramUrl != null) payload['instagram_url'] = instagramUrl;
+    if (tiktokUrl != null) payload['tiktok_url'] = tiktokUrl;
     if (payload.isEmpty) return;
     await _client.from('barbers').update(payload).eq('id', barber.id);
     await refreshBarbers();
@@ -202,6 +206,8 @@ class BarberStore {
       daysOff: (row['days_off'] as List<dynamic>? ?? const <dynamic>[])
           .map((e) => (e as num).toInt())
           .toList(),
+      instagramUrl: row['instagram_url']?.toString(),
+      tiktokUrl: row['tiktok_url']?.toString(),
     );
   }
 

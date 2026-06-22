@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../app/routes.dart';
+import '../../data/auth/session_service.dart';
 import '../../data/storage/media_storage.dart';
 import '../../data/models/barber.dart';
 import '../../data/models/appointment.dart';
@@ -89,7 +90,10 @@ class _BarberShellState extends State<BarberShell> {
     }
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    await SessionService.clearRole();
+    await Supabase.instance.client.auth.signOut();
+    if (!mounted) return;
     Navigator.of(context).pushNamedAndRemoveUntil(
       Routes.roleSelect,
       (_) => false,
@@ -2470,6 +2474,8 @@ class _BarberSettingsPage extends StatefulWidget {
 class _BarberSettingsPageState extends State<_BarberSettingsPage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _aboutCtrl;
+  late TextEditingController _instagramCtrl;
+  late TextEditingController _tiktokCtrl;
   Barber? _barber;
 
   @override
@@ -2478,6 +2484,8 @@ class _BarberSettingsPageState extends State<_BarberSettingsPage> {
     _barber = BarberStore.instance.currentUserBarber;
     _nameCtrl = TextEditingController(text: _barber?.name ?? '');
     _aboutCtrl = TextEditingController(text: _barber?.about ?? '');
+    _instagramCtrl = TextEditingController(text: _barber?.instagramUrl ?? '');
+    _tiktokCtrl = TextEditingController(text: _barber?.tiktokUrl ?? '');
     BarberStore.instance.barbers.addListener(_syncCurrentBarber);
     BarberStore.instance.refreshBarbers();
   }
@@ -2487,6 +2495,8 @@ class _BarberSettingsPageState extends State<_BarberSettingsPage> {
     BarberStore.instance.barbers.removeListener(_syncCurrentBarber);
     _nameCtrl.dispose();
     _aboutCtrl.dispose();
+    _instagramCtrl.dispose();
+    _tiktokCtrl.dispose();
     super.dispose();
   }
 
@@ -2498,6 +2508,8 @@ class _BarberSettingsPageState extends State<_BarberSettingsPage> {
       if (current != null) {
         _nameCtrl.text = current.name;
         _aboutCtrl.text = current.about ?? '';
+        _instagramCtrl.text = current.instagramUrl ?? '';
+        _tiktokCtrl.text = current.tiktokUrl ?? '';
       }
     });
   }
@@ -2509,6 +2521,8 @@ class _BarberSettingsPageState extends State<_BarberSettingsPage> {
     await BarberStore.instance.updateCurrentBarberProfile(
       name: _nameCtrl.text.trim().isEmpty ? current.name : _nameCtrl.text.trim(),
       about: _aboutCtrl.text.trim().isEmpty ? '' : _aboutCtrl.text.trim(),
+      instagramUrl: _instagramCtrl.text.trim(),
+      tiktokUrl: _tiktokCtrl.text.trim(),
     );
     final refreshed = BarberStore.instance.currentUserBarber;
     if (refreshed != null) {
@@ -2710,6 +2724,30 @@ class _BarberSettingsPageState extends State<_BarberSettingsPage> {
                   labelText: 'Hakkımda',
                   alignLabelWithHint: true,
                   prefixIcon: Icon(Icons.info_outline_rounded),
+                ),
+              ),
+            ],
+          ),
+          const SettingsSectionLabel('Sosyal Medya'),
+          SettingsFieldGroup(
+            children: [
+              TextField(
+                controller: _instagramCtrl,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(
+                  labelText: 'Instagram Linki',
+                  hintText: 'https://instagram.com/hesabin',
+                  prefixIcon: Icon(Icons.camera_alt_outlined),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _tiktokCtrl,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(
+                  labelText: 'TikTok Linki',
+                  hintText: 'https://tiktok.com/@hesabin',
+                  prefixIcon: Icon(Icons.music_video_outlined),
                 ),
               ),
             ],

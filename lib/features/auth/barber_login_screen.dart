@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../app/app_theme.dart';
 import '../../app/routes.dart';
 import '../../data/auth/auth_retry.dart';
+import '../../data/auth/session_service.dart';
 import '../../data/stores/barber_store.dart';
 import '../../widgets/hover_lift.dart';
 import '../../widgets/modern_ui.dart';
@@ -138,7 +139,7 @@ class _BarberLoginScreenState extends State<BarberLoginScreen> {
       });
 
       await BarberStore.instance.refreshBarbers();
-
+      await SessionService.saveRole(UserRole.barber);
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(Routes.barberShell);
     } on AuthException catch (e) {
@@ -178,7 +179,7 @@ class _BarberLoginScreenState extends State<BarberLoginScreen> {
         district: _selectedDistrict ?? '',
         address: _addressCtrl.text.trim(),
       );
-
+      await SessionService.saveRole(UserRole.barber);
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(Routes.barberShell);
     } on AuthException catch (e) {

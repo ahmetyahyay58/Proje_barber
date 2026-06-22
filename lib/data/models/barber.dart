@@ -31,6 +31,8 @@ class Barber {
     this.masters = const <String>[],
     this.services = const <BarberService>[],
     this.daysOff = const <int>[],
+    this.instagramUrl,
+    this.tiktokUrl,
   });
 
   final String id;
@@ -60,6 +62,9 @@ class Barber {
 
   /// İzin günleri: 1=Pazartesi … 7=Pazar
   final List<int> daysOff;
+
+  final String? instagramUrl;
+  final String? tiktokUrl;
 
   bool get isOpenToday => !daysOff.contains(DateTime.now().weekday);
 }

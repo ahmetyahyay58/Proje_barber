@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../app/app_theme.dart';
 import '../../app/routes.dart';
 import '../../data/auth/auth_retry.dart';
+import '../../data/auth/session_service.dart';
 import '../../data/stores/customer_profile_store.dart';
 import '../../widgets/hover_lift.dart';
 import '../../widgets/modern_ui.dart';
@@ -59,6 +60,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       });
       await CustomerProfileStore.instance.ensureProfileExists();
       await CustomerProfileStore.instance.refreshProfile();
+      await SessionService.saveRole(UserRole.customer);
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(Routes.customerShell);
     } on AuthException catch (e) {
@@ -94,7 +96,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
       }
       await _upsertCustomerProfile();
       await CustomerProfileStore.instance.refreshProfile();
-
+      await SessionService.saveRole(UserRole.customer);
       if (!mounted) return;
       Navigator.of(context).pushReplacementNamed(Routes.customerShell);
     } on AuthException catch (e) {

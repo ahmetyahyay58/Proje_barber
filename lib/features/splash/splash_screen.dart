@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/app_theme.dart';
 import '../../app/routes.dart';
+import '../../data/auth/session_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -71,8 +72,17 @@ class _SplashScreenState extends State<SplashScreen>
     ]).animate(CurvedAnimation(parent: _ctrl,
         curve: const Interval(0.43, 0.97)));
 
-    _ctrl.forward().then((_) {
-      if (mounted) Navigator.of(context).pushReplacementNamed(Routes.roleSelect);
+    _ctrl.forward().then((_) async {
+      if (!mounted) return;
+      final role = await SessionService.getSavedRole();
+      if (!mounted) return;
+      if (role == UserRole.customer) {
+        Navigator.of(context).pushReplacementNamed(Routes.customerShell);
+      } else if (role == UserRole.barber) {
+        Navigator.of(context).pushReplacementNamed(Routes.barberShell);
+      } else {
+        Navigator.of(context).pushReplacementNamed(Routes.roleSelect);
+      }
     });
   }
 
