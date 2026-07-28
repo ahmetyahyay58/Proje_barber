@@ -13,8 +13,8 @@ Berber Pro, erkek kuaförleri ve berberlerin iş süreçlerini dijitalleştirmek
 
 *Bu proje geliştirilirken kullanılan temel teknolojiler:*
 
-- **Frontend / Arayüz:** [Buraya kullandığınız dili/kütüphaneyi yazın. Örn: C# WinForms, Flutter, React]
-- **Backend / Veritabanı:** [Buraya veritabanını yazın. Örn: SQLite, MSSQL, Firebase]
+- **Frontend / Arayüz:** flutter 
+- **Backend / Veritabanı:** SQlite 
 
 ## 🚧 Yol Haritası (Gelecek Özellikler)
 
