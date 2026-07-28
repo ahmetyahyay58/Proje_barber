@@ -1,17 +1,42 @@
-# project_barber
+# 💈 Berber Pro - Akıllı Kuaför ve Berber Yönetim Sistemi
 
-A new Flutter project.
+Berber Pro, erkek kuaförleri ve berberlerin iş süreçlerini dijitalleştirmek için geliştirilmiş modern bir işletme yönetim yazılımıdır. Randevu karmaşasına son verir, gelir-gider takibini kolaylaştırır ve müşteri memnuniyetini artırır.
 
-## Getting Started
+## ✨ Öne Çıkan Özellikler
 
-This project is a starting point for a Flutter application.
+- 📅 **Akıllı Randevu Yönetimi:** Kolay takvim arayüzü ile çakışmayan randevular.
+- 👥 **Müşteri Kayıt ve Takip:** Detaylı saç/sakal kesim tercihleri ve geçmişi.
+- 💰 **Finansal Analiz:** Günlük, haftalık ve aylık gelir-gider raporlamaları.
+- ✂️ **Personel Performansı:** Hangi personelin ne kadar ciro yaptığını takip etme.
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 Kurulum
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+Projeyi yerel bilgisayarınızda çalıştırmak için aşağıdaki adımları takip edin:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Projeyi bilgisayarınıza indirin:
+   ```bash
+   git clone https://github.com
+   ```
+2. Proje klasörüne gidin:
+   ```bash
+   cd berber-pro
+   ```
+3. Gerekli bağımlılıkları yükleyin:
+   ```bash
+   # Örnek (Projeniz hangi dildeyse):
+   npm install  # veya pip install -r requirements.txt
+   ```
+4. Uygulamayı başlatın:
+   ```bash
+   npm start # veya python main.py
+   ```
+
+## 🛠️ Kullanılan Teknolojiler
+
+- **Frontend:** [Örn: React, Flutter, HTML/CSS]
+- **Backend:** [Örn: Node.js, Python, C#]
+- **Veritabanı:** [Örn: PostgreSQL, Firebase, SQLite]
+
+## 📸 Ekran Görüntüleri
+*(Görselleri deponuzdaki bir klasöre yükleyip buraya yollarını ekleyebilirsiniz)*
+<img src="./ekran-goruntusu.png" alt="Berber Pro Arayüzü" width="100%"/>
