@@ -24,5 +24,4 @@ Projenin demo aşamasından tam sürüme geçmesi için eklenmesi planlanan öze
 - [ ] Gelişmiş sadakat programı (Puan/Kampanya yönetimi)
 - [ ] Çoklu şube desteği
 
-## 📸 Ekran Görüntüleri
-<img src="C:/Users/ahmet/OneDrive/Pictures/Screenshots/Ekran görüntüsü 2026-07-22 143518" alt="Berber Pro Arayüzü" width="100%"/>
+
